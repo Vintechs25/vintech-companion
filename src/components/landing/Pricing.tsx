@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -120,8 +121,9 @@ const Pricing = () => {
                   }`}
                   variant={plan.popular ? "default" : "outline"}
                   size="lg"
+                  asChild
                 >
-                  Get Started
+                  <Link to="/register">Get Started</Link>
                 </Button>
               </CardContent>
             </Card>
