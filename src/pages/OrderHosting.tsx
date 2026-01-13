@@ -21,8 +21,8 @@ import { toast } from "@/hooks/use-toast";
 
 const plans = [
   {
-    id: "starter",
-    name: "Starter",
+    id: "basic",
+    name: "Basic",
     price: 4.99,
     icon: Server,
     features: [
@@ -35,7 +35,7 @@ const plans = [
     popular: false,
   },
   {
-    id: "professional",
+    id: "pro",
     name: "Professional",
     price: 9.99,
     icon: Rocket,

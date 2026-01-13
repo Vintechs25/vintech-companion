@@ -193,7 +193,7 @@ export default function Dashboard() {
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back{data?.user?.name ? `, ${data.user.name}` : ""}!
+            Welcome back{data?.user?.firstname ? `, ${data.user.firstname} ${data.user.lastname || ''}`.trim() : ""}!
           </p>
         </div>
         <Button asChild className="gradient-primary hover:opacity-90">
@@ -327,7 +327,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-medium">${invoice.amount}</p>
+                      <p className="font-medium">${invoice.total}</p>
                       <StatusBadge status={invoice.status} />
                     </div>
                   </div>

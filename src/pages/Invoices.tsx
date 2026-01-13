@@ -46,7 +46,7 @@ export default function Invoices() {
               {invoices.map((inv) => (
                 <TableRow key={inv.id}>
                   <TableCell className="font-medium">#{inv.id}</TableCell>
-                  <TableCell>${inv.amount}</TableCell>
+                  <TableCell>${inv.total}</TableCell>
                   <TableCell>{inv.duedate}</TableCell>
                   <TableCell><Badge className={inv.status.toLowerCase() === "paid" ? "bg-primary/20 text-primary" : "bg-yellow-500/20 text-yellow-600"}>{inv.status.toLowerCase() === "paid" ? <CheckCircle className="h-3 w-3 mr-1" /> : <Clock className="h-3 w-3 mr-1" />}{inv.status}</Badge></TableCell>
                   <TableCell className="text-right">{inv.status.toLowerCase() !== "paid" && inv.pay_url && <Button size="sm" asChild><a href={inv.pay_url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-4 w-4 mr-1" />Pay Now</a></Button>}</TableCell>

@@ -45,6 +45,7 @@ const navItems = [
   { title: "Domains", url: "/domains", icon: Globe },
   { title: "Invoices", url: "/invoices", icon: FileText },
   { title: "Tickets", url: "/tickets", icon: MessageSquare },
+  { title: "CyberPanel", url: "https://vintechdev.store:8090", icon: Server, external: true },
 ];
 
 const settingsItems = [
@@ -83,13 +84,20 @@ function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={isActive(item.url)}
-                    className={isActive(item.url) ? "bg-primary/10 text-primary" : ""}
+                    isActive={!item.external && isActive(item.url)}
+                    className={!item.external && isActive(item.url) ? "bg-primary/10 text-primary" : ""}
                   >
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
+                    {item.external ? (
+                      <a href={item.url} target="_blank" rel="noopener noreferrer">
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </a>
+                    ) : (
+                      <Link to={item.url}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
