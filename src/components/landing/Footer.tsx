@@ -1,32 +1,42 @@
+import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
+  const scrollToSection = (href: string) => {
+    if (href.startsWith("#")) {
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
+
   const footerLinks = {
     Product: [
-      { label: "Features", href: "#features" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "Security", href: "#" },
-      { label: "Uptime", href: "#" },
+      { label: "Features", href: "#features", isAnchor: true },
+      { label: "Pricing", href: "#pricing", isAnchor: true },
+      { label: "Order Hosting", href: "/order", isAnchor: false },
+      { label: "Login", href: "/login", isAnchor: false },
     ],
     Company: [
-      { label: "About", href: "#" },
-      { label: "Blog", href: "#" },
-      { label: "Careers", href: "#" },
-      { label: "Contact", href: "#" },
+      { label: "About", href: "#", isAnchor: true },
+      { label: "Blog", href: "#", isAnchor: true },
+      { label: "Careers", href: "#", isAnchor: true },
+      { label: "Contact", href: "/tickets", isAnchor: false },
     ],
     Support: [
-      { label: "Help Center", href: "#" },
-      { label: "Documentation", href: "#" },
-      { label: "Status", href: "#" },
-      { label: "FAQ", href: "#faq" },
+      { label: "Help Center", href: "/tickets", isAnchor: false },
+      { label: "Documentation", href: "#", isAnchor: true },
+      { label: "Status", href: "#", isAnchor: true },
+      { label: "FAQ", href: "#faq", isAnchor: true },
     ],
     Legal: [
-      { label: "Privacy", href: "#" },
-      { label: "Terms", href: "#" },
-      { label: "Cookie Policy", href: "#" },
-      { label: "GDPR", href: "#" },
+      { label: "Privacy", href: "#", isAnchor: true },
+      { label: "Terms", href: "#", isAnchor: true },
+      { label: "Cookie Policy", href: "#", isAnchor: true },
+      { label: "GDPR", href: "#", isAnchor: true },
     ],
   };
 
@@ -37,12 +47,12 @@ const Footer = () => {
         <div className="py-16 grid md:grid-cols-2 lg:grid-cols-6 gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <a href="/" className="flex items-center gap-2 mb-4">
+            <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="w-10 h-10 rounded-lg gradient-primary flex items-center justify-center">
                 <Zap className="w-6 h-6 text-primary-foreground" />
               </div>
               <span className="text-xl font-bold text-gradient">Vintech Hosting</span>
-            </a>
+            </Link>
             <p className="text-muted-foreground mb-6 max-w-sm">
               Lightning-fast web hosting for businesses of all sizes. Reliable, secure, and backed by 24/7 expert support.
             </p>
@@ -67,12 +77,21 @@ const Footer = () => {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <a
-                      href={link.href}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {link.label}
-                    </a>
+                    {link.isAnchor ? (
+                      <button
+                        onClick={() => scrollToSection(link.href)}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {link.label}
+                      </button>
+                    ) : (
+                      <Link
+                        to={link.href}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>

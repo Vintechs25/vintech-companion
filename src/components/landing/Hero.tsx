@@ -1,7 +1,15 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Shield, Clock } from "lucide-react";
 
 const Hero = () => {
+  const scrollToPricing = () => {
+    const element = document.querySelector("#pricing");
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-16">
       {/* Gradient Background */}
@@ -33,11 +41,18 @@ const Hero = () => {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Button size="lg" className="gradient-primary border-0 hover:opacity-90 transition-opacity text-lg px-8 py-6 h-auto">
-              Get Started Free
-              <ArrowRight className="w-5 h-5 ml-2" />
+            <Button size="lg" className="gradient-primary border-0 hover:opacity-90 transition-opacity text-lg px-8 py-6 h-auto" asChild>
+              <Link to="/register">
+                Get Started Free
+                <ArrowRight className="w-5 h-5 ml-2" />
+              </Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6 h-auto border-2">
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="text-lg px-8 py-6 h-auto border-2"
+              onClick={scrollToPricing}
+            >
               View Plans
             </Button>
           </div>
