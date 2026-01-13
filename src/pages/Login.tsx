@@ -80,12 +80,14 @@ export default function Login() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>
-                  <Link 
-                    to="/forgot-password" 
+                  <a 
+                    href="https://billing.vintechdev.store/password/reset" 
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-sm text-primary hover:underline"
                   >
                     Forgot password?
-                  </Link>
+                  </a>
                 </div>
                 <Input
                   id="password"

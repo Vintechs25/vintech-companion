@@ -16,6 +16,7 @@ import OrderHosting from "./pages/OrderHosting";
 import Domains from "./pages/Domains";
 import Invoices from "./pages/Invoices";
 import Tickets from "./pages/Tickets";
+import TicketDetail from "./pages/TicketDetail";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
@@ -43,6 +44,7 @@ const App = () => (
               <Route path="domains" element={<Domains />} />
               <Route path="invoices" element={<Invoices />} />
               <Route path="tickets" element={<Tickets />} />
+              <Route path="tickets/:id" element={<TicketDetail />} />
               <Route path="settings" element={<Settings />} />
             </Route>
             

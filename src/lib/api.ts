@@ -17,7 +17,8 @@ interface LoginResponse {
 
 interface DashboardData {
   user: {
-    name: string;
+    firstname: string;
+    lastname: string;
     email: string;
   };
   services: Service[];
@@ -49,7 +50,7 @@ interface Domain {
 
 interface Invoice {
   id: number;
-  amount: string;
+  total: string;
   status: string;
   duedate: string;
   pay_url: string;
@@ -65,6 +66,18 @@ interface Ticket {
   date?: string;
   lastreply?: string;
   priority?: string;
+}
+
+interface TicketReply {
+  id: number;
+  message: string;
+  date: string;
+  admin: boolean;
+  name?: string;
+}
+
+interface TicketDetail extends Ticket {
+  replies: TicketReply[];
 }
 
 interface OrderPayload {
@@ -149,10 +162,10 @@ export const servicesApi = {
     action: string,
     data?: Record<string, unknown>
   ): Promise<ApiResponse> => {
-    return apiRequest<ApiResponse>("/service.php", {
+    return apiRequest<ApiResponse>("/service-action.php", {
       method: "POST",
       body: JSON.stringify({
-        id: serviceId,
+        service_id: serviceId,
         action,
         ...data,
       }),
@@ -190,6 +203,10 @@ export const ticketsApi = {
     return apiRequest<Ticket[]>(`/tickets.php?userid=${userid}`);
   },
 
+  getOne: async (ticketId: number): Promise<TicketDetail> => {
+    return apiRequest<TicketDetail>(`/ticket.php?id=${ticketId}`);
+  },
+
   open: async (
     userid: number,
     subject: string,
@@ -208,6 +225,16 @@ export const ticketsApi = {
       }),
     });
   },
+
+  reply: async (ticketId: number, message: string): Promise<ApiResponse> => {
+    return apiRequest<ApiResponse>("/replyticket.php", {
+      method: "POST",
+      body: JSON.stringify({
+        ticketid: ticketId,
+        message,
+      }),
+    });
+  },
 };
 
 // Export types
@@ -219,5 +246,7 @@ export type {
   Domain,
   Invoice,
   Ticket,
+  TicketDetail,
+  TicketReply,
   OrderPayload,
 };

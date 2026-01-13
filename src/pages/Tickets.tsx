@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ticketsApi, type Ticket } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +17,7 @@ import { toast } from "@/hooks/use-toast";
 
 export default function Tickets() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +86,16 @@ export default function Tickets() {
             <TableHeader><TableRow><TableHead>ID</TableHead><TableHead>Subject</TableHead><TableHead>Status</TableHead><TableHead>Last Reply</TableHead></TableRow></TableHeader>
             <TableBody>
               {tickets.map((t) => (
-                <TableRow key={t.id}><TableCell>#{t.id}</TableCell><TableCell className="font-medium">{t.subject}</TableCell><TableCell><Badge variant="outline">{t.status}</Badge></TableCell><TableCell>{t.lastreply || "N/A"}</TableCell></TableRow>
+                <TableRow 
+                  key={t.id} 
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/tickets/${t.id}`)}
+                >
+                  <TableCell>#{t.id}</TableCell>
+                  <TableCell className="font-medium">{t.subject}</TableCell>
+                  <TableCell><Badge variant="outline">{t.status}</Badge></TableCell>
+                  <TableCell>{t.lastreply || "N/A"}</TableCell>
+                </TableRow>
               ))}
             </TableBody>
           </Table>
