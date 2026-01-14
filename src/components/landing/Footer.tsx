@@ -20,6 +20,11 @@ const Footer = () => {
       { label: "Order Hosting", href: "/order", isAnchor: false },
       { label: "Client Area", href: "/login", isAnchor: false },
     ],
+    Domains: [
+      { label: "Domain Search", href: "/domains/search", isAnchor: false },
+      { label: "Register Domain", href: "/domains/search", isAnchor: false },
+      { label: "Transfer Domain", href: "/domains/transfer", isAnchor: false },
+    ],
     Resources: [
       { label: "CyberPanel", href: "https://vintechdev.store:8090", isExternal: true },
       { label: "Billing Portal", href: "https://billing.vintechdev.store", isExternal: true },
@@ -35,7 +40,7 @@ const Footer = () => {
     <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4">
         {/* Main Footer */}
-        <div className="py-16 grid md:grid-cols-2 lg:grid-cols-5 gap-12">
+        <div className="py-16 grid md:grid-cols-2 lg:grid-cols-6 gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">

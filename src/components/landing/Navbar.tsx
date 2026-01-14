@@ -7,9 +7,10 @@ const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const navLinks = [
-    { href: "#features", label: "Features" },
-    { href: "#pricing", label: "Pricing" },
-    { href: "#faq", label: "FAQ" },
+    { href: "#features", label: "Features", isAnchor: true },
+    { href: "#pricing", label: "Pricing", isAnchor: true },
+    { href: "/domains/search", label: "Domains", isAnchor: false },
+    { href: "#faq", label: "FAQ", isAnchor: true },
   ];
 
   const scrollToSection = (href: string) => {
@@ -35,13 +36,23 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">
             {navLinks.map((link) => (
-              <button
-                key={link.href}
-                onClick={() => scrollToSection(link.href)}
-                className="text-muted-foreground hover:text-foreground transition-colors font-medium"
-              >
-                {link.label}
-              </button>
+              link.isAnchor ? (
+                <button
+                  key={link.href}
+                  onClick={() => scrollToSection(link.href)}
+                  className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+                >
+                  {link.label}
+                </button>
+              ) : (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
           </div>
 
@@ -69,7 +80,8 @@ const Navbar = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
-              {navLinks.map((link) => (
+            {navLinks.map((link) => (
+              link.isAnchor ? (
                 <button
                   key={link.href}
                   onClick={() => scrollToSection(link.href)}
@@ -77,7 +89,17 @@ const Navbar = () => {
                 >
                   {link.label}
                 </button>
-              ))}
+              ) : (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="text-muted-foreground hover:text-foreground transition-colors font-medium px-2 py-1"
+                  onClick={() => setIsOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              )
+            ))}
               <div className="flex flex-col gap-2 pt-4 border-t border-border">
                 <Button variant="ghost" className="justify-start" asChild>
                   <Link to="/login">Login</Link>

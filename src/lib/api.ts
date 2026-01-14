@@ -190,10 +190,57 @@ export const invoicesApi = {
   },
 };
 
+// Domain search result interface
+interface DomainSearchResult {
+  domain: string;
+  available: boolean;
+  price: string;
+}
+
+interface DomainRegistrationPayload {
+  userid: number;
+  domain: string;
+  years: number;
+  privacy: boolean;
+  registrant: {
+    firstname: string;
+    lastname: string;
+    email: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    postcode: string;
+    country: string;
+  };
+}
+
+interface DomainOrderResponse extends ApiResponse {
+  pay_url?: string;
+}
+
 // Domains endpoint
 export const domainsApi = {
   getAll: async (userid: number): Promise<Domain[]> => {
     return apiRequest<Domain[]>(`/domains.php?userid=${userid}`);
+  },
+
+  search: async (domain: string): Promise<DomainSearchResult[]> => {
+    return apiRequest<DomainSearchResult[]>(`/domain-search.php?domain=${encodeURIComponent(domain)}`);
+  },
+
+  register: async (payload: DomainRegistrationPayload): Promise<DomainOrderResponse> => {
+    return apiRequest<DomainOrderResponse>("/domain-register.php", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  transfer: async (userid: number, domain: string, eppCode: string): Promise<DomainOrderResponse> => {
+    return apiRequest<DomainOrderResponse>("/domain-transfer.php", {
+      method: "POST",
+      body: JSON.stringify({ userid, domain, epp_code: eppCode }),
+    });
   },
 };
 
@@ -249,4 +296,7 @@ export type {
   TicketDetail,
   TicketReply,
   OrderPayload,
+  DomainSearchResult,
+  DomainRegistrationPayload,
+  DomainOrderResponse,
 };

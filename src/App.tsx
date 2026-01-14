@@ -14,6 +14,9 @@ import MyHosting from "./pages/MyHosting";
 import ServiceDetails from "./pages/ServiceDetails";
 import OrderHosting from "./pages/OrderHosting";
 import Domains from "./pages/Domains";
+import DomainSearch from "./pages/DomainSearch";
+import DomainRegister from "./pages/DomainRegister";
+import DomainTransfer from "./pages/DomainTransfer";
 import Invoices from "./pages/Invoices";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
@@ -34,6 +37,9 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/domains/search" element={<DomainSearch />} />
+            <Route path="/domains/register" element={<DomainRegister />} />
+            <Route path="/domains/transfer" element={<DomainTransfer />} />
             
             {/* Protected client area */}
             <Route path="/" element={<ProtectedRoute><ClientLayout /></ProtectedRoute>}>
