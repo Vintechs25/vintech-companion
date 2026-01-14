@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Zap } from "lucide-react";
+import { Zap, Mail, ExternalLink } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -14,29 +14,20 @@ const Footer = () => {
   };
 
   const footerLinks = {
-    Product: [
+    Hosting: [
       { label: "Features", href: "#features", isAnchor: true },
       { label: "Pricing", href: "#pricing", isAnchor: true },
       { label: "Order Hosting", href: "/order", isAnchor: false },
-      { label: "Login", href: "/login", isAnchor: false },
+      { label: "Client Area", href: "/login", isAnchor: false },
     ],
-    Company: [
-      { label: "About", href: "#", isAnchor: true },
-      { label: "Blog", href: "#", isAnchor: true },
-      { label: "Careers", href: "#", isAnchor: true },
-      { label: "Contact", href: "/tickets", isAnchor: false },
-    ],
-    Support: [
-      { label: "Help Center", href: "/tickets", isAnchor: false },
-      { label: "Documentation", href: "#", isAnchor: true },
-      { label: "Status", href: "#", isAnchor: true },
+    Resources: [
+      { label: "CyberPanel", href: "https://vintechdev.store:8090", isExternal: true },
+      { label: "Billing Portal", href: "https://billing.vintechdev.store", isExternal: true },
       { label: "FAQ", href: "#faq", isAnchor: true },
     ],
-    Legal: [
-      { label: "Privacy", href: "#", isAnchor: true },
-      { label: "Terms", href: "#", isAnchor: true },
-      { label: "Cookie Policy", href: "#", isAnchor: true },
-      { label: "GDPR", href: "#", isAnchor: true },
+    Support: [
+      { label: "Open Ticket", href: "/tickets", isAnchor: false },
+      { label: "Contact Us", href: "/tickets", isAnchor: false },
     ],
   };
 
@@ -44,7 +35,7 @@ const Footer = () => {
     <footer className="bg-card border-t border-border">
       <div className="container mx-auto px-4">
         {/* Main Footer */}
-        <div className="py-16 grid md:grid-cols-2 lg:grid-cols-6 gap-12">
+        <div className="py-16 grid md:grid-cols-2 lg:grid-cols-5 gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-4">
@@ -54,19 +45,13 @@ const Footer = () => {
               <span className="text-xl font-bold text-gradient">Vintech Hosting</span>
             </Link>
             <p className="text-muted-foreground mb-6 max-w-sm">
-              Lightning-fast web hosting for businesses of all sizes. Reliable, secure, and backed by 24/7 expert support.
+              Fast, reliable web hosting powered by Oracle Cloud infrastructure and CyberPanel control panel.
             </p>
-            <div className="flex gap-4">
-              {["Twitter", "GitHub", "LinkedIn"].map((social) => (
-                <a
-                  key={social}
-                  href="#"
-                  className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-primary/10 transition-colors"
-                  aria-label={social}
-                >
-                  {social[0]}
-                </a>
-              ))}
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Mail className="w-4 h-4" />
+              <a href="mailto:support@vintechdev.store" className="hover:text-foreground transition-colors">
+                support@vintechdev.store
+              </a>
             </div>
           </div>
 
@@ -77,7 +62,17 @@ const Footer = () => {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
-                    {link.isAnchor ? (
+                    {link.isExternal ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
+                      >
+                        {link.label}
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    ) : link.isAnchor ? (
                       <button
                         onClick={() => scrollToSection(link.href)}
                         className="text-muted-foreground hover:text-foreground transition-colors"

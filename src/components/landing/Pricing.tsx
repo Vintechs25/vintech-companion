@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const plans = [
   {
-    name: "Starter",
+    id: "basic",
+    name: "Basic",
     description: "Perfect for personal sites & blogs",
     price: "4.99",
     period: "/month",
@@ -16,11 +17,13 @@ const plans = [
       "Free SSL Certificate",
       "1 Email Account",
       "Weekly Backups",
+      "CyberPanel Access",
     ],
     popular: false,
   },
   {
-    name: "Professional",
+    id: "pro",
+    name: "Pro",
     description: "For growing businesses",
     price: "9.99",
     period: "/month",
@@ -31,12 +34,13 @@ const plans = [
       "Free SSL Certificate",
       "Unlimited Email Accounts",
       "Daily Backups",
-      "Free Domain (1 Year)",
+      "CyberPanel Access",
       "Priority Support",
     ],
     popular: true,
   },
   {
+    id: "enterprise",
     name: "Enterprise",
     description: "For high-traffic websites",
     price: "24.99",
@@ -48,10 +52,10 @@ const plans = [
       "Free SSL Certificate",
       "Unlimited Email Accounts",
       "Real-time Backups",
-      "Free Domain (Forever)",
+      "CyberPanel Access",
       "24/7 Priority Support",
-      "Dedicated IP Address",
-      "Advanced Security Suite",
+      "Dedicated Resources",
+      "Advanced Security",
     ],
     popular: false,
   },
@@ -68,7 +72,7 @@ const Pricing = () => {
             <span className="text-gradient">Transparent Pricing</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Choose the perfect plan for your needs. No hidden fees, cancel anytime.
+            Choose the perfect plan for your needs. All plans include CyberPanel control panel.
           </p>
         </div>
 

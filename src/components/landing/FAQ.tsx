@@ -7,34 +7,44 @@ import {
 
 const faqs = [
   {
-    question: "How do I get started with Vintech Hosting?",
+    question: "What control panel do you provide?",
     answer:
-      "Getting started is easy! Simply choose a plan that fits your needs, complete the quick signup process, and your hosting account will be ready in minutes. Our one-click installers make it simple to launch WordPress, Joomla, or any other popular CMS.",
+      "All hosting plans include full access to CyberPanel, a modern and user-friendly control panel. You can manage websites, emails, databases, SSL certificates, and more from a single dashboard at vintechdev.store:8090.",
   },
   {
-    question: "What's included in each hosting plan?",
+    question: "How do I access my hosting account?",
     answer:
-      "All plans include free SSL certificates, SSD storage, unlimited bandwidth, and access to our control panel. Higher-tier plans add features like unlimited websites, priority support, free domains, and advanced security tools. Check our pricing section for detailed comparisons.",
-  },
-  {
-    question: "Can I upgrade my plan later?",
-    answer:
-      "Absolutely! You can upgrade your plan at any time from your dashboard. The upgrade is instant, and we'll prorate the remaining time on your current plan. Your data and settings will be preserved during the upgrade.",
-  },
-  {
-    question: "Do you offer refunds?",
-    answer:
-      "Yes! We offer a 30-day money-back guarantee on all hosting plans. If you're not completely satisfied, contact our support team within 30 days of purchase for a full refund. No questions asked.",
+      "After signing up, you'll receive login credentials for our client area. From there, you can manage your services, view invoices, open support tickets, and access CyberPanel to manage your websites.",
   },
   {
     question: "What payment methods do you accept?",
     answer:
-      "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers for annual plans. All transactions are secured with industry-standard encryption.",
+      "We accept various payment methods through our billing system at billing.vintechdev.store. You can view all available options during checkout.",
   },
   {
-    question: "How does your 99.9% uptime guarantee work?",
+    question: "Do you offer a money-back guarantee?",
     answer:
-      "Our infrastructure is built for reliability with redundant systems and 24/7 monitoring. If we fail to meet our 99.9% uptime guarantee in any calendar month, you'll receive account credit proportional to the downtime experienced.",
+      "Yes! We offer a 30-day money-back guarantee on all hosting plans. If you're not satisfied, contact our support team for a full refund.",
+  },
+  {
+    question: "How do I get support?",
+    answer:
+      "You can open a support ticket through your client area. Our team monitors tickets and will respond as quickly as possible to help resolve your issues.",
+  },
+  {
+    question: "Can I upgrade my plan later?",
+    answer:
+      "Absolutely! You can upgrade your hosting plan at any time through the client area. The price difference will be prorated for the remaining billing period.",
+  },
+  {
+    question: "Do you provide free SSL certificates?",
+    answer:
+      "Yes, all plans include free Let's Encrypt SSL certificates that auto-renew. You can install them easily through CyberPanel with just a few clicks.",
+  },
+  {
+    question: "What is your uptime guarantee?",
+    answer:
+      "We maintain a 99.9% uptime guarantee. Our infrastructure is hosted on Oracle Cloud, providing enterprise-grade reliability and performance.",
   },
 ];
 
