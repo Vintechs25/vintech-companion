@@ -1,36 +1,36 @@
-import { Zap, Shield, Rocket, Globe, Headphones, HardDrive } from "lucide-react";
+import { Zap, Shield, Rocket, Globe, Headphones, Server } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 const features = [
   {
     icon: Zap,
-    title: "Blazing Fast SSD",
-    description: "NVMe SSD storage delivers 10x faster read/write speeds for lightning-quick website loading.",
+    title: "NVMe SSD Storage",
+    description: "Ultra-fast NVMe SSD storage for lightning-quick website loading and optimal performance.",
   },
   {
     icon: Shield,
     title: "99.9% Uptime",
-    description: "Enterprise-grade infrastructure ensures your website stays online when it matters most.",
+    description: "Enterprise-grade Oracle Cloud infrastructure ensures your website stays online 24/7.",
   },
   {
-    icon: HardDrive,
-    title: "Free SSL Certificates",
-    description: "Secure your site instantly with auto-renewed SSL certificates at no extra cost.",
+    icon: Server,
+    title: "CyberPanel Control",
+    description: "Full access to CyberPanel for easy website, email, and database management.",
   },
   {
     icon: Rocket,
-    title: "One-Click Installs",
-    description: "Deploy WordPress, Joomla, Drupal, and 400+ apps with a single click.",
+    title: "One-Click WordPress",
+    description: "Deploy WordPress and other popular CMS platforms with a single click via CyberPanel.",
   },
   {
     icon: Headphones,
-    title: "24/7 Expert Support",
-    description: "Our hosting experts are available round the clock to help you succeed.",
+    title: "24/7 Support",
+    description: "Get help anytime through our ticket system. Our team is ready to assist you.",
   },
   {
     icon: Globe,
-    title: "Global CDN",
-    description: "Content delivery network ensures fast loading speeds for visitors worldwide.",
+    title: "Free SSL Certificates",
+    description: "Secure your websites with auto-renewed Let's Encrypt SSL certificates at no extra cost.",
   },
 ];
 
@@ -48,7 +48,7 @@ const Features = () => {
             <span className="text-gradient">Succeed Online</span>
           </h2>
           <p className="text-lg text-muted-foreground">
-            Powerful features designed to help your website perform at its best.
+            Powered by Oracle Cloud infrastructure with CyberPanel control panel.
           </p>
         </div>
 

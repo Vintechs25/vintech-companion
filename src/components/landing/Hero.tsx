@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Clock } from "lucide-react";
+import { ArrowRight, Zap, Shield, Server } from "lucide-react";
 
 const Hero = () => {
   const scrollToPricing = () => {
@@ -24,26 +24,26 @@ const Hero = () => {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
             <Zap className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-primary">99.9% Uptime Guaranteed</span>
+            <span className="text-sm font-medium text-primary">Powered by Oracle Cloud</span>
           </div>
 
           {/* Main Headline */}
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-            Lightning-Fast{" "}
+            Fast & Reliable{" "}
             <span className="text-gradient">Web Hosting</span>{" "}
-            for Growing Businesses
+            for Everyone
           </h1>
 
           {/* Subheadline */}
           <p className="text-xl md:text-2xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Power your website with NVMe SSD storage, free SSL certificates, and 24/7 expert support. Scale effortlessly as you grow.
+            NVMe SSD storage, CyberPanel control panel, free SSL certificates, and 24/7 support. Starting at just $4.99/month.
           </p>
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <Button size="lg" className="gradient-primary border-0 hover:opacity-90 transition-opacity text-lg px-8 py-6 h-auto" asChild>
               <Link to="/register">
-                Get Started Free
+                Get Started
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Link>
             </Button>
@@ -64,8 +64,8 @@ const Hero = () => {
                 <Zap className="w-5 h-5 text-primary" />
               </div>
               <div className="text-left">
-                <div className="font-bold text-foreground">10x Faster</div>
-                <div className="text-sm text-muted-foreground">NVMe SSD</div>
+                <div className="font-bold text-foreground">NVMe SSD</div>
+                <div className="text-sm text-muted-foreground">Ultra Fast</div>
               </div>
             </div>
             
@@ -75,17 +75,17 @@ const Hero = () => {
               </div>
               <div className="text-left">
                 <div className="font-bold text-foreground">Free SSL</div>
-                <div className="text-sm text-muted-foreground">Auto-Renewed</div>
+                <div className="text-sm text-muted-foreground">Let's Encrypt</div>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-primary" />
+                <Server className="w-5 h-5 text-primary" />
               </div>
               <div className="text-left">
-                <div className="font-bold text-foreground">24/7 Support</div>
-                <div className="text-sm text-muted-foreground">Expert Help</div>
+                <div className="font-bold text-foreground">CyberPanel</div>
+                <div className="text-sm text-muted-foreground">Full Access</div>
               </div>
             </div>
           </div>
