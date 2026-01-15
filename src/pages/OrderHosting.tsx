@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Server,
   Check,
@@ -16,8 +17,15 @@ import {
   Rocket,
   Zap,
   Building,
+  CreditCard,
+  Wallet,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+
+const paymentMethods = [
+  { id: "paypal", name: "PayPal", icon: Wallet, description: "Pay securely with PayPal" },
+  { id: "stripe", name: "Credit Card", icon: CreditCard, description: "Visa, Mastercard, Amex" },
+];
 
 const plans = [
   {
@@ -73,6 +81,7 @@ export default function OrderHosting() {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [domain, setDomain] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("paypal");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -102,7 +111,7 @@ export default function OrderHosting() {
         userid: user.userid,
         product: selectedPlan,
         domain: domain,
-        paymentmethod: "paypal",
+        paymentmethod: paymentMethod,
       });
 
       if (response.result === "success") {
@@ -205,7 +214,7 @@ export default function OrderHosting() {
         </div>
 
         {/* Domain Input */}
-        <Card>
+        <Card className="mb-6">
           <CardHeader>
             <CardTitle>Domain Name</CardTitle>
             <CardDescription>
@@ -227,6 +236,49 @@ export default function OrderHosting() {
                 You can use an existing domain or register a new one
               </p>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Payment Method */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Payment Method</CardTitle>
+            <CardDescription>Select how you'd like to pay</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <RadioGroup
+              value={paymentMethod}
+              onValueChange={setPaymentMethod}
+              className="grid gap-4 md:grid-cols-2"
+            >
+              {paymentMethods.map((method) => {
+                const Icon = method.icon;
+                const isSelected = paymentMethod === method.id;
+
+                return (
+                  <div key={method.id}>
+                    <RadioGroupItem value={method.id} id={method.id} className="peer sr-only" />
+                    <Label
+                      htmlFor={method.id}
+                      className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-accent ${
+                        isSelected ? "border-primary bg-primary/5" : "border-muted"
+                      }`}
+                    >
+                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                        isSelected ? "gradient-primary" : "bg-primary/10"
+                      }`}>
+                        <Icon className={`h-5 w-5 ${isSelected ? "text-primary-foreground" : "text-primary"}`} />
+                      </div>
+                      <div>
+                        <p className="font-medium">{method.name}</p>
+                        <p className="text-sm text-muted-foreground">{method.description}</p>
+                      </div>
+                      {isSelected && <Check className="h-5 w-5 text-primary ml-auto" />}
+                    </Label>
+                  </div>
+                );
+              })}
+            </RadioGroup>
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button type="button" variant="outline" onClick={() => navigate("/hosting")}>
