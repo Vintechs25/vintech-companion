@@ -4,7 +4,9 @@ const API_BASE = "https://vintechdev.store/api";
 interface ApiResponse<T = unknown> {
   result?: string;
   error?: string;
+  message?: string;
   data?: T;
+  pay_url?: string;
 }
 
 interface LoginResponse {
@@ -84,6 +86,7 @@ interface OrderPayload {
   userid: number;
   product: string;
   domain: string;
+  paymentmethod: string;
 }
 
 // Helper function for API requests
@@ -202,6 +205,7 @@ interface DomainRegistrationPayload {
   domain: string;
   years: number;
   privacy: boolean;
+  paymentmethod: string;
   registrant: {
     firstname: string;
     lastname: string;
