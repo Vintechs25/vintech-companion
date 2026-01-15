@@ -98,6 +98,7 @@ export default function DomainRegister() {
         domain,
         years: yearCount,
         privacy,
+        paymentmethod: "paypal",
         registrant: formData,
       });
 
@@ -110,7 +111,7 @@ export default function DomainRegister() {
         });
         navigate("/domains");
       } else {
-        throw new Error(result.error || "Registration failed");
+        throw new Error(result.message || result.error || "Registration failed");
       }
     } catch (error) {
       // Redirect to WHMCS for actual registration

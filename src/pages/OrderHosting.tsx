@@ -102,16 +102,21 @@ export default function OrderHosting() {
         userid: user.userid,
         product: selectedPlan,
         domain: domain,
+        paymentmethod: "paypal",
       });
 
       if (response.result === "success") {
-        toast({
-          title: "Order Placed!",
-          description: "Your hosting order has been submitted successfully.",
-        });
-        navigate("/hosting");
+        if (response.pay_url) {
+          window.location.href = response.pay_url;
+        } else {
+          toast({
+            title: "Order Placed!",
+            description: "Your hosting order has been submitted successfully.",
+          });
+          navigate("/hosting");
+        }
       } else {
-        throw new Error(response.error || "Order failed");
+        throw new Error(response.message || response.error || "Order failed");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to place order");
