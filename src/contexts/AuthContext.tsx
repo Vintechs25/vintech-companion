@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { authApi } from "@/lib/api";
-import { useNavigate } from "react-router-dom";
 
 interface User {
   userid: number;
