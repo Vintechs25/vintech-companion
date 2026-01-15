@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Globe, Shield, Check } from "lucide-react";
+import { ArrowLeft, Globe, Shield, Check, Wallet, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +13,11 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
+
+const paymentMethods = [
+  { id: "paypal", name: "PayPal", icon: Wallet, description: "Pay securely with PayPal" },
+  { id: "stripe", name: "Credit Card", icon: CreditCard, description: "Visa, Mastercard, Amex" },
+];
 
 const registrantSchema = z.object({
   firstname: z.string().min(1, "First name is required").max(50),
@@ -36,6 +41,7 @@ export default function DomainRegister() {
   
   const [years, setYears] = useState("1");
   const [privacy, setPrivacy] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState("paypal");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstname: "",
@@ -98,7 +104,7 @@ export default function DomainRegister() {
         domain,
         years: yearCount,
         privacy,
-        paymentmethod: "paypal",
+        paymentmethod: paymentMethod,
         registrant: formData,
       });
 
@@ -248,6 +254,44 @@ export default function DomainRegister() {
                           <Input id="country" name="country" value={formData.country} onChange={handleInputChange} placeholder="US" required />
                         </div>
                       </div>
+                    </div>
+
+                    {/* Payment Method */}
+                    <div className="space-y-3">
+                      <Label>Payment Method</Label>
+                      <RadioGroup
+                        value={paymentMethod}
+                        onValueChange={setPaymentMethod}
+                        className="grid md:grid-cols-2 gap-4"
+                      >
+                        {paymentMethods.map((method) => {
+                          const Icon = method.icon;
+                          const isSelected = paymentMethod === method.id;
+
+                          return (
+                            <div key={method.id}>
+                              <RadioGroupItem value={method.id} id={`payment-${method.id}`} className="peer sr-only" />
+                              <Label
+                                htmlFor={`payment-${method.id}`}
+                                className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-accent ${
+                                  isSelected ? "border-primary bg-primary/5" : "border-muted"
+                                }`}
+                              >
+                                <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+                                  isSelected ? "gradient-primary" : "bg-primary/10"
+                                }`}>
+                                  <Icon className={`h-4 w-4 ${isSelected ? "text-primary-foreground" : "text-primary"}`} />
+                                </div>
+                                <div className="flex-1">
+                                  <p className="font-medium">{method.name}</p>
+                                  <p className="text-xs text-muted-foreground">{method.description}</p>
+                                </div>
+                                {isSelected && <Check className="h-4 w-4 text-primary" />}
+                              </Label>
+                            </div>
+                          );
+                        })}
+                      </RadioGroup>
                     </div>
 
                     <Button type="submit" className="w-full gradient-primary" size="lg" disabled={isSubmitting}>
