@@ -179,9 +179,18 @@ export const servicesApi = {
 // Order endpoint
 export const orderApi = {
   create: async (payload: OrderPayload): Promise<ApiResponse> => {
+    // NOTE: This endpoint may expect form-encoded POST (not JSON)
+    const form = new URLSearchParams();
+    for (const [key, value] of Object.entries(payload)) {
+      form.set(key, String(value));
+    }
+
     return apiRequest<ApiResponse>("/order.php", {
       method: "POST",
-      body: JSON.stringify(payload),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: form.toString(),
     });
   },
 };
