@@ -310,28 +310,45 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-3">
-                {invoices.slice(0, 4).map((invoice) => (
-                  <div
-                    key={invoice.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                        <FileText className="h-4 w-4 text-primary" />
+                {invoices.slice(0, 4).map((invoice) => {
+                  const isUnpaid = invoice.status.toLowerCase() === "unpaid";
+
+                  return (
+                    <div
+                      key={invoice.id}
+                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
+                          <FileText className="h-4 w-4 text-primary" />
+                        </div>
+                        <div>
+                          <p className="font-medium">Invoice #{invoice.id}</p>
+                          <p className="text-sm text-muted-foreground">Due: {invoice.duedate}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">Invoice #{invoice.id}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Due: {invoice.duedate}
-                        </p>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="font-medium">${invoice.total}</p>
+                          <StatusBadge status={invoice.status} />
+                        </div>
+
+                        {isUnpaid && invoice.pay_url && (
+                          <Button
+                            size="sm"
+                            className="gradient-primary hover:opacity-90"
+                            onClick={() => {
+                              window.location.href = invoice.pay_url;
+                            }}
+                          >
+                            Pay Now
+                          </Button>
+                        )}
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium">${invoice.total}</p>
-                      <StatusBadge status={invoice.status} />
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {invoices.length > 4 && (
                   <Button variant="ghost" className="w-full" asChild>
                     <Link to="/invoices">
