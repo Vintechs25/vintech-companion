@@ -136,13 +136,31 @@ export const authApi = {
     email: string,
     password: string,
     firstname: string,
-    lastname: string
+    lastname: string,
+    billing: {
+      phonenumber: string;
+      companyname?: string;
+      address1: string;
+      address2?: string;
+      city: string;
+      state: string;
+      postcode: string;
+      country: string;
+    }
   ): Promise<ApiResponse> => {
     return whmcsRequest<ApiResponse>("AddClient", {
       email,
       password2: password,
       firstname,
       lastname,
+      phonenumber: billing.phonenumber,
+      companyname: billing.companyname || "",
+      address1: billing.address1,
+      address2: billing.address2 || "",
+      city: billing.city,
+      state: billing.state,
+      postcode: billing.postcode,
+      country: billing.country,
     });
   },
 
