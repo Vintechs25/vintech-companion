@@ -1,7 +1,6 @@
 // Vintech Hosting API Client
+// Requests are sent to the PHP bridge which injects WHMCS credentials server-side.
 const WHMCS_API_URL = "https://vintechdev.store/api/whmcs.php";
-const WHMCS_API_IDENTIFIER = "Fg08ttjpIYSm2QgOmcQJmyRrNC5Qv9CR";
-const WHMCS_API_SECRET = "xnDujdSB0XPqeARqqgJDcdXPpNX3t7Gj";
 
 interface ApiResponse<T = unknown> {
   result?: string;
@@ -96,17 +95,25 @@ async function whmcsRequest<T>(
   action: string,
   params?: Record<string, unknown>
 ): Promise<T> {
-  const payload: Record<string, unknown> = {
-    action,
-    ...params,
-  };
+  // Send as form-encoded to keep requests "simple" (no CORS preflight) and
+  // compatible with PHP's default $_POST parsing.
+  const body = new URLSearchParams();
+  body.append("action", action);
+  body.append("responsetype", "json");
+
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) body.append(key, String(value));
+    }
+  }
 
   const response = await fetch(WHMCS_API_URL, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json",
     },
-    body: JSON.stringify(payload),
+    body: body.toString(),
   });
 
   if (!response.ok) {
