@@ -1,6 +1,7 @@
 // Vintech Hosting API Client
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const WHMCS_PROXY_URL = `${SUPABASE_URL}/functions/v1/whmcs-proxy`;
+const WHMCS_API_URL = "https://vintechdev.store/includes/api.php";
+const WHMCS_API_IDENTIFIER = "Fg08ttjpIYSm2QgOmcQJmyRrNC5Qv9CR";
+const WHMCS_API_SECRET = "xnDujdSB0XPqeARqqgJDcdXPpNX3t7Gj";
 
 interface ApiResponse<T = unknown> {
   result?: string;
@@ -90,20 +91,31 @@ interface OrderPayload {
   paymentmethod: string;
 }
 
-// Helper function for WHMCS API requests via Edge Function proxy
+// Helper function for WHMCS API requests
 async function whmcsRequest<T>(
   action: string,
   params?: Record<string, unknown>
 ): Promise<T> {
-  const response = await fetch(WHMCS_PROXY_URL, {
+  const formData = new URLSearchParams();
+  formData.append("identifier", WHMCS_API_IDENTIFIER);
+  formData.append("secret", WHMCS_API_SECRET);
+  formData.append("action", action);
+  formData.append("responsetype", "json");
+
+  if (params) {
+    for (const [key, value] of Object.entries(params)) {
+      if (value !== undefined && value !== null) {
+        formData.append(key, String(value));
+      }
+    }
+  }
+
+  const response = await fetch(WHMCS_API_URL, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: JSON.stringify({
-      action,
-      ...params,
-    }),
+    body: formData.toString(),
   });
 
   if (!response.ok) {
