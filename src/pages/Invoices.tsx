@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { invoicesApi, type Invoice } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,13 +13,11 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import {
   FileText,
   AlertCircle,
-  ExternalLink,
   Search,
-  DollarSign,
   Clock,
   CheckCircle,
-  Download,
   CreditCard,
+  Eye,
 } from "lucide-react";
 
 export default function Invoices() {
@@ -99,41 +97,41 @@ export default function Invoices() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Paid</p>
-                <p className="text-2xl font-bold text-primary">${totalPaid.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-primary">${totalPaid.toFixed(2)}</p>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-primary" />
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <CheckCircle className="h-7 w-7 text-primary" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Pending Amount</p>
-                <p className="text-2xl font-bold text-yellow-600">${totalUnpaid.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-yellow-600">${totalUnpaid.toFixed(2)}</p>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-yellow-500/10 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-yellow-600" />
+              <div className="h-14 w-14 rounded-2xl bg-yellow-500/10 flex items-center justify-center">
+                <Clock className="h-7 w-7 text-yellow-600" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Invoices</p>
-                <p className="text-2xl font-bold">{invoices.length}</p>
+                <p className="text-3xl font-bold">{invoices.length}</p>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
-                <FileText className="h-6 w-6 text-muted-foreground" />
+              <div className="h-14 w-14 rounded-2xl bg-muted flex items-center justify-center">
+                <FileText className="h-7 w-7 text-muted-foreground" />
               </div>
             </div>
           </CardContent>
@@ -165,7 +163,7 @@ export default function Invoices() {
 
       {/* Invoices Table */}
       {invoices.length === 0 ? (
-        <Card>
+        <Card className="border-border/50">
           <CardContent>
             <EmptyState
               icon={FileText}
@@ -175,7 +173,7 @@ export default function Invoices() {
           </CardContent>
         </Card>
       ) : filteredInvoices.length === 0 ? (
-        <Card>
+        <Card className="border-border/50">
           <CardContent className="py-12 text-center">
             <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">No invoices match your search</p>
@@ -185,7 +183,7 @@ export default function Invoices() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="border-border/50">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -202,11 +200,11 @@ export default function Invoices() {
                 {filteredInvoices.map((invoice) => {
                   const isUnpaid = invoice.status.toLowerCase() === "unpaid";
                   return (
-                    <TableRow key={invoice.id}>
+                    <TableRow key={invoice.id} className="group">
                       <TableCell>
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                            <FileText className="h-4 w-4 text-primary" />
+                          <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-primary/20">
+                            <FileText className="h-5 w-5 text-primary-foreground" />
                           </div>
                           <span className="font-medium">#{invoice.id}</span>
                         </div>
@@ -214,7 +212,7 @@ export default function Invoices() {
                       <TableCell>{invoice.date || "N/A"}</TableCell>
                       <TableCell>{invoice.duedate}</TableCell>
                       <TableCell>
-                        <span className="font-semibold">${invoice.total}</span>
+                        <span className="font-semibold text-lg">${invoice.total}</span>
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={invoice.status} />
@@ -227,12 +225,12 @@ export default function Invoices() {
                               target="_blank"
                               rel="noopener noreferrer"
                             >
-                              <Download className="h-4 w-4 mr-1" />
+                              <Eye className="h-4 w-4 mr-1" />
                               View
                             </a>
                           </Button>
                           {isUnpaid && invoice.pay_url && (
-                            <Button size="sm" className="gradient-primary" asChild>
+                            <Button size="sm" className="gradient-primary shadow-lg shadow-primary/25" asChild>
                               <a href={invoice.pay_url} target="_blank" rel="noopener noreferrer">
                                 <CreditCard className="h-4 w-4 mr-1" />
                                 Pay Now

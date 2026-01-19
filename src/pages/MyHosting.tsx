@@ -25,13 +25,11 @@ import {
   Server,
   Plus,
   AlertCircle,
-  ExternalLink,
   Search,
   Settings,
   Globe,
   HardDrive,
-  FolderOpen,
-  Shield,
+  Zap,
 } from "lucide-react";
 
 export default function MyHosting() {
@@ -134,7 +132,7 @@ export default function MyHosting() {
             {filteredServices.length !== services.length && ` · ${filteredServices.length} shown`}
           </p>
         </div>
-        <Button asChild className="gradient-primary hover:opacity-90">
+        <Button asChild className="gradient-primary hover:opacity-90 shadow-lg shadow-primary/25">
           <Link to="/order">
             <Plus className="h-4 w-4 mr-2" />
             New Hosting
@@ -170,7 +168,7 @@ export default function MyHosting() {
 
       {/* Services */}
       {services.length === 0 ? (
-        <Card>
+        <Card className="border-border/50">
           <CardContent>
             <EmptyState
               icon={Server}
@@ -181,7 +179,7 @@ export default function MyHosting() {
           </CardContent>
         </Card>
       ) : filteredServices.length === 0 ? (
-        <Card>
+        <Card className="border-border/50">
           <CardContent className="py-12 text-center">
             <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">No services match your search</p>
@@ -198,14 +196,18 @@ export default function MyHosting() {
         </Card>
       ) : view === "grid" ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredServices.map((service) => (
-            <Card key={service.id} className="hover:shadow-lg transition-all hover:border-primary/30 group">
+          {filteredServices.map((service, index) => (
+            <Card 
+              key={service.id} 
+              className="hover:shadow-xl transition-all duration-300 hover:border-primary/30 group hover:-translate-y-1 border-border/50 animate-fade-in-up"
+              style={{ animationDelay: `${index * 0.05}s` }}
+            >
               <CardContent className="p-5">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <Server className="h-5 w-5 text-primary" />
+                    <div className="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
+                      <Server className="h-6 w-6 text-primary-foreground" />
                     </div>
                     <div className="min-w-0">
                       <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
@@ -226,7 +228,7 @@ export default function MyHosting() {
                       <Globe className="h-3.5 w-3.5" /> IP Address
                     </span>
                     <div className="flex items-center gap-1">
-                      <code className="bg-muted px-2 py-0.5 rounded text-xs">{service.ip || "N/A"}</code>
+                      <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">{service.ip || "N/A"}</code>
                       {service.ip && <CopyButton text={service.ip} className="h-6 w-6" />}
                     </div>
                   </div>
@@ -234,7 +236,7 @@ export default function MyHosting() {
                     <span className="text-muted-foreground flex items-center gap-1.5">
                       <HardDrive className="h-3.5 w-3.5" /> Username
                     </span>
-                    <code className="bg-muted px-2 py-0.5 rounded text-xs">{service.username || "N/A"}</code>
+                    <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">{service.username || "N/A"}</code>
                   </div>
                   {service.nextduedate && (
                     <div className="flex items-center justify-between text-sm">
@@ -245,28 +247,18 @@ export default function MyHosting() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-2">
-                  {service.panel_url && (
-                    <Button variant="outline" size="sm" className="flex-1" asChild>
-                      <a href={service.panel_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-1" />
-                        Panel
-                      </a>
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" className="flex-1" asChild>
-                    <Link to={`/hosting/${service.id}`}>
-                      <Settings className="h-4 w-4 mr-1" />
-                      Manage
-                    </Link>
-                  </Button>
-                </div>
+                <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
+                  <Link to={`/hosting/${service.id}`}>
+                    <Settings className="h-4 w-4 mr-2" />
+                    Manage Service
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}
         </div>
       ) : (
-        <Card>
+        <Card className="border-border/50">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -284,8 +276,8 @@ export default function MyHosting() {
                   <TableRow key={service.id} className="group">
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <Server className="h-4 w-4 text-primary" />
+                        <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-primary/20">
+                          <Server className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <div>
                           <p className="font-medium group-hover:text-primary transition-colors">
@@ -299,12 +291,12 @@ export default function MyHosting() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        <code className="text-sm bg-muted px-2 py-1 rounded">{service.ip || "N/A"}</code>
+                        <code className="text-sm bg-muted px-2 py-1 rounded font-mono">{service.ip || "N/A"}</code>
                         {service.ip && <CopyButton text={service.ip} className="h-6 w-6" />}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <code className="text-sm">{service.username || "N/A"}</code>
+                      <code className="text-sm font-mono">{service.username || "N/A"}</code>
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={service.status} />
@@ -317,22 +309,12 @@ export default function MyHosting() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {service.panel_url && (
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={service.panel_url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="h-4 w-4 mr-1" />
-                              Panel
-                            </a>
-                          </Button>
-                        )}
-                        <Button variant="outline" size="sm" asChild>
-                          <Link to={`/hosting/${service.id}`}>
-                            <Settings className="h-4 w-4 mr-1" />
-                            Manage
-                          </Link>
-                        </Button>
-                      </div>
+                      <Button variant="outline" size="sm" asChild>
+                        <Link to={`/hosting/${service.id}`}>
+                          <Settings className="h-4 w-4 mr-1" />
+                          Manage
+                        </Link>
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
