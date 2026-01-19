@@ -6,12 +6,23 @@ interface User {
   email?: string;
 }
 
+interface BillingAddress {
+  phonenumber: string;
+  companyname?: string;
+  address1: string;
+  address2?: string;
+  city: string;
+  state: string;
+  postcode: string;
+  country: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, firstname: string, lastname: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string, firstname: string, lastname: string, billing: BillingAddress) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
 }
 
@@ -59,10 +70,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     email: string, 
     password: string, 
     firstname: string, 
-    lastname: string
+    lastname: string,
+    billing: BillingAddress
   ) => {
     try {
-      const response = await authApi.register(email, password, firstname, lastname);
+      const response = await authApi.register(email, password, firstname, lastname, billing);
       
       if (response.result === "success") {
         // Auto-login after successful registration
@@ -71,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { 
         success: false, 
-        error: response.error || "Registration failed. Please try again." 
+        error: response.message || response.error || "Registration failed. Please try again." 
       };
     } catch (error) {
       console.error("Register error:", error);

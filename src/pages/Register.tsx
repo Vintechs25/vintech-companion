@@ -6,12 +6,44 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Zap, AlertCircle, CheckCircle } from "lucide-react";
+
+const COUNTRIES = [
+  { code: "US", name: "United States" },
+  { code: "GB", name: "United Kingdom" },
+  { code: "CA", name: "Canada" },
+  { code: "AU", name: "Australia" },
+  { code: "DE", name: "Germany" },
+  { code: "FR", name: "France" },
+  { code: "NL", name: "Netherlands" },
+  { code: "IN", name: "India" },
+  { code: "SG", name: "Singapore" },
+  { code: "AE", name: "United Arab Emirates" },
+  { code: "ZA", name: "South Africa" },
+  { code: "NG", name: "Nigeria" },
+  { code: "KE", name: "Kenya" },
+  { code: "GH", name: "Ghana" },
+  { code: "BR", name: "Brazil" },
+  { code: "MX", name: "Mexico" },
+  { code: "JP", name: "Japan" },
+  { code: "PH", name: "Philippines" },
+  { code: "PK", name: "Pakistan" },
+  { code: "BD", name: "Bangladesh" },
+];
 
 export default function Register() {
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
   const [email, setEmail] = useState("");
+  const [phonenumber, setPhonenumber] = useState("");
+  const [companyname, setCompanyname] = useState("");
+  const [address1, setAddress1] = useState("");
+  const [address2, setAddress2] = useState("");
+  const [city, setCity] = useState("");
+  const [state, setState] = useState("");
+  const [postcode, setPostcode] = useState("");
+  const [country, setCountry] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -34,9 +66,23 @@ export default function Register() {
       return;
     }
 
+    if (!country) {
+      setError("Please select a country");
+      return;
+    }
+
     setIsLoading(true);
 
-    const result = await register(email, password, firstname, lastname);
+    const result = await register(email, password, firstname, lastname, {
+      phonenumber,
+      companyname,
+      address1,
+      address2,
+      city,
+      state,
+      postcode,
+      country,
+    });
     
     if (result.success) {
       navigate("/dashboard", { replace: true });
@@ -93,10 +139,10 @@ export default function Register() {
       </div>
 
       {/* Right side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-background">
-        <div className="w-full max-w-md">
+      <div className="flex-1 flex items-center justify-center p-8 bg-background overflow-y-auto">
+        <div className="w-full max-w-lg">
           {/* Logo */}
-          <div className="flex items-center justify-center gap-2 mb-8">
+          <div className="flex items-center justify-center gap-2 mb-6">
             <div className="p-2 rounded-xl gradient-primary shadow-lg shadow-primary/25">
               <Zap className="h-6 w-6 text-primary-foreground" />
             </div>
@@ -120,76 +166,205 @@ export default function Register() {
                   </Alert>
                 )}
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="firstname">First name</Label>
+                {/* Personal Information */}
+                <div className="space-y-3">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Personal Information</h3>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="firstname">First name *</Label>
+                      <Input
+                        id="firstname"
+                        type="text"
+                        placeholder="John"
+                        value={firstname}
+                        onChange={(e) => setFirstname(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="lastname">Last name *</Label>
+                      <Input
+                        id="lastname"
+                        type="text"
+                        placeholder="Doe"
+                        value={lastname}
+                        onChange={(e) => setLastname(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="phonenumber">Phone number *</Label>
+                      <Input
+                        id="phonenumber"
+                        type="tel"
+                        placeholder="+1234567890"
+                        value={phonenumber}
+                        onChange={(e) => setPhonenumber(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Billing Address */}
+                <div className="space-y-3 pt-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Billing Address</h3>
+                  
+                  <div className="space-y-1.5">
+                    <Label htmlFor="companyname">Company name (Optional)</Label>
                     <Input
-                      id="firstname"
+                      id="companyname"
                       type="text"
-                      placeholder="John"
-                      value={firstname}
-                      onChange={(e) => setFirstname(e.target.value)}
-                      required
+                      placeholder="Your company"
+                      value={companyname}
+                      onChange={(e) => setCompanyname(e.target.value)}
                       disabled={isLoading}
-                      className="h-11"
+                      className="h-10"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lastname">Last name</Label>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="address1">Street address *</Label>
                     <Input
-                      id="lastname"
+                      id="address1"
                       type="text"
-                      placeholder="Doe"
-                      value={lastname}
-                      onChange={(e) => setLastname(e.target.value)}
+                      placeholder="123 Main Street"
+                      value={address1}
+                      onChange={(e) => setAddress1(e.target.value)}
                       required
                       disabled={isLoading}
-                      className="h-11"
+                      className="h-10"
                     />
                   </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="address2">Street address 2</Label>
+                    <Input
+                      id="address2"
+                      type="text"
+                      placeholder="Apt, suite, unit (optional)"
+                      value={address2}
+                      onChange={(e) => setAddress2(e.target.value)}
+                      disabled={isLoading}
+                      className="h-10"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="city">City *</Label>
+                      <Input
+                        id="city"
+                        type="text"
+                        placeholder="New York"
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="state">State/Region *</Label>
+                      <Input
+                        id="state"
+                        type="text"
+                        placeholder="NY"
+                        value={state}
+                        onChange={(e) => setState(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="postcode">ZIP/Postal *</Label>
+                      <Input
+                        id="postcode"
+                        type="text"
+                        placeholder="10001"
+                        value={postcode}
+                        onChange={(e) => setPostcode(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="country">Country *</Label>
+                    <Select value={country} onValueChange={setCountry} disabled={isLoading}>
+                      <SelectTrigger className="h-10">
+                        <SelectValue placeholder="Select country" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border">
+                        {COUNTRIES.map((c) => (
+                          <SelectItem key={c.code} value={c.code}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="h-11"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="h-11"
-                  />
-                  <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm password</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    disabled={isLoading}
-                    className="h-11"
-                  />
+
+                {/* Account Security */}
+                <div className="space-y-3 pt-2">
+                  <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Account Security</h3>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="password">Password *</Label>
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="confirmPassword">Confirm password *</Label>
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        required
+                        disabled={isLoading}
+                        className="h-10"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Password must be at least 8 characters</p>
                 </div>
               </CardContent>
               
