@@ -1,1 +1,4 @@
 project_id = "snrnnpmytpsmmsahbmap"
+
+[functions.whmcs-proxy]
+verify_jwt = false
