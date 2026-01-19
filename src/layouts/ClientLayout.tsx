@@ -35,6 +35,7 @@ import {
   ChevronDown,
   Moon,
   Sun,
+  Zap,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 
@@ -44,8 +45,7 @@ const navItems = [
   { title: "Order Hosting", url: "/order", icon: ShoppingCart },
   { title: "Domains", url: "/domains", icon: Globe },
   { title: "Invoices", url: "/invoices", icon: FileText },
-  { title: "Tickets", url: "/tickets", icon: MessageSquare },
-  { title: "CyberPanel", url: "https://vintechdev.store:8090", icon: Server, external: true },
+  { title: "Support", url: "/tickets", icon: MessageSquare },
 ];
 
 const settingsItems = [
@@ -57,7 +57,7 @@ function AppSidebar() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const handleLogout = () => {
     logout();
@@ -68,8 +68,8 @@ function AppSidebar() {
     <Sidebar className="border-r border-border">
       <SidebarHeader className="p-4 border-b border-border">
         <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg gradient-primary">
-            <Server className="h-5 w-5 text-primary-foreground" />
+          <div className="p-1.5 rounded-xl gradient-primary shadow-lg shadow-primary/25">
+            <Zap className="h-5 w-5 text-primary-foreground" />
           </div>
           <span className="text-lg font-bold text-gradient">Vintech</span>
         </Link>
@@ -77,27 +77,20 @@ function AppSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Main Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {navItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    isActive={!item.external && isActive(item.url)}
-                    className={!item.external && isActive(item.url) ? "bg-primary/10 text-primary" : ""}
+                    isActive={isActive(item.url)}
+                    className={isActive(item.url) ? "bg-primary/10 text-primary" : ""}
                   >
-                    {item.external ? (
-                      <a href={item.url} target="_blank" rel="noopener noreferrer">
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </a>
-                    ) : (
-                      <Link to={item.url}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.title}</span>
-                      </Link>
-                    )}
+                    <Link to={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -136,12 +129,12 @@ function AppSidebar() {
 
       <SidebarFooter className="p-4 border-t border-border">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
+          <div className="h-9 w-9 rounded-xl bg-primary/20 flex items-center justify-center">
             <User className="h-4 w-4 text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">User #{user?.userid}</p>
-            <p className="text-xs text-muted-foreground truncate">Client</p>
+            <p className="text-sm font-medium truncate">Account #{user?.userid}</p>
+            <p className="text-xs text-muted-foreground truncate">Hosting Client</p>
           </div>
         </div>
       </SidebarFooter>
@@ -165,7 +158,7 @@ function ThemeToggle() {
   };
 
   return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme}>
+    <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-xl">
       {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
     </Button>
   );
@@ -194,7 +187,7 @@ export default function ClientLayout() {
         
         <div className="flex-1 flex flex-col">
           {/* Top Header */}
-          <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
             <div className="flex items-center gap-2">
               <SidebarTrigger />
             </div>
@@ -204,11 +197,11 @@ export default function ClientLayout() {
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2">
-                    <div className="h-7 w-7 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Button variant="ghost" className="gap-2 rounded-xl">
+                    <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center">
                       <User className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="hidden sm:inline">Account</span>
+                    <span className="hidden sm:inline font-medium">Account</span>
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

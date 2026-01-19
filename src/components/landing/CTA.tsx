@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Rocket, CheckCircle } from "lucide-react";
 
 const CTA = () => {
   return (
@@ -15,22 +15,38 @@ const CTA = () => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/30 mb-8">
-            <Zap className="w-4 h-4 text-primary-foreground" />
-            <span className="text-sm font-medium text-primary-foreground">Start from $4.99/month</span>
+            <Rocket className="w-4 h-4 text-primary-foreground" />
+            <span className="text-sm font-medium text-primary-foreground">Launch Your Website Today</span>
           </div>
 
           <h2 className="text-3xl md:text-5xl font-bold mb-6 text-primary-foreground">
-            Ready to Launch Your Website?
+            Ready to Get Started?
           </h2>
           
-          <p className="text-xl text-primary-foreground/80 mb-10 max-w-xl mx-auto">
-            Get your website online today with Vintech Hosting. Fast setup, CyberPanel included, and 24/7 support.
+          <p className="text-xl text-primary-foreground/80 mb-8 max-w-xl mx-auto">
+            Join thousands of happy customers and get your website online in minutes with Vintech Hosting.
           </p>
+
+          {/* Benefits */}
+          <div className="flex flex-wrap items-center justify-center gap-6 mb-10">
+            <div className="flex items-center gap-2 text-primary-foreground/90">
+              <CheckCircle className="w-5 h-5 text-accent" />
+              <span>Instant Setup</span>
+            </div>
+            <div className="flex items-center gap-2 text-primary-foreground/90">
+              <CheckCircle className="w-5 h-5 text-accent" />
+              <span>30-Day Guarantee</span>
+            </div>
+            <div className="flex items-center gap-2 text-primary-foreground/90">
+              <CheckCircle className="w-5 h-5 text-accent" />
+              <span>24/7 Support</span>
+            </div>
+          </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button 
               size="lg" 
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg px-8 py-6 h-auto"
+              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg px-8 py-6 h-auto shadow-xl transition-all hover:scale-105"
               asChild
             >
               <Link to="/register">
@@ -44,12 +60,12 @@ const CTA = () => {
               className="border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-lg px-8 py-6 h-auto"
               asChild
             >
-              <Link to="/tickets">Contact Support</Link>
+              <Link to="/tickets">Contact Sales</Link>
             </Button>
           </div>
 
-          <p className="text-primary-foreground/60 mt-8 text-sm">
-            ✓ CyberPanel included &nbsp;&nbsp; ✓ 30-day money-back guarantee &nbsp;&nbsp; ✓ Cancel anytime
+          <p className="text-primary-foreground/50 mt-8 text-sm">
+            Starting at $4.99/month · Cancel anytime
           </p>
         </div>
       </div>
