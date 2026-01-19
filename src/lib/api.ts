@@ -135,6 +135,18 @@ export const authApi = {
       lastname,
     });
   },
+
+  resetPassword: async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await whmcsRequest<ApiResponse>("ResetPassword", { email });
+      if (response.result === "success") {
+        return { success: true };
+      }
+      return { success: false, error: response.message || "Failed to send reset email" };
+    } catch {
+      return { success: false, error: "Failed to send reset email. Please try again." };
+    }
+  },
 };
 
 // Dashboard endpoint - combines multiple WHMCS calls
