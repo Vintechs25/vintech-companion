@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ticketsApi, type Ticket } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { PriorityBadge } from "@/components/shared/PriorityBadge";
@@ -120,7 +120,7 @@ export default function Tickets() {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gradient-primary">
+            <Button className="gradient-primary shadow-lg shadow-primary/25">
               <Plus className="h-4 w-4 mr-2" />
               New Ticket
             </Button>
@@ -128,6 +128,9 @@ export default function Tickets() {
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Open Support Ticket</DialogTitle>
+              <DialogDescription>
+                Describe your issue and we'll get back to you as soon as possible.
+              </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
@@ -141,7 +144,6 @@ export default function Tickets() {
                       <SelectItem value="sales">Sales</SelectItem>
                       <SelectItem value="technical">Technical Support</SelectItem>
                       <SelectItem value="billing">Billing</SelectItem>
-                      <SelectItem value="abuse">Abuse</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -196,41 +198,41 @@ export default function Tickets() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card>
+        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Open Tickets</p>
-                <p className="text-2xl font-bold text-yellow-600">{openTickets.length}</p>
+                <p className="text-3xl font-bold text-yellow-600">{openTickets.length}</p>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-yellow-500/10 flex items-center justify-center">
-                <Clock className="h-6 w-6 text-yellow-600" />
+              <div className="h-14 w-14 rounded-2xl bg-yellow-500/10 flex items-center justify-center">
+                <Clock className="h-7 w-7 text-yellow-600" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Answered</p>
-                <p className="text-2xl font-bold text-blue-600">{answeredTickets.length}</p>
+                <p className="text-3xl font-bold text-blue-600">{answeredTickets.length}</p>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-blue-500/10 flex items-center justify-center">
-                <MessageSquare className="h-6 w-6 text-blue-600" />
+              <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
+                <MessageSquare className="h-7 w-7 text-blue-600" />
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Tickets</p>
-                <p className="text-2xl font-bold">{tickets.length}</p>
+                <p className="text-3xl font-bold">{tickets.length}</p>
               </div>
-              <div className="h-12 w-12 rounded-xl bg-muted flex items-center justify-center">
-                <Headphones className="h-6 w-6 text-muted-foreground" />
+              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                <Headphones className="h-7 w-7 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -264,7 +266,7 @@ export default function Tickets() {
 
       {/* Tickets Table */}
       {tickets.length === 0 ? (
-        <Card>
+        <Card className="border-border/50">
           <CardContent>
             <EmptyState
               icon={MessageSquare}
@@ -275,7 +277,7 @@ export default function Tickets() {
           </CardContent>
         </Card>
       ) : filteredTickets.length === 0 ? (
-        <Card>
+        <Card className="border-border/50">
           <CardContent className="py-12 text-center">
             <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="text-muted-foreground">No tickets match your search</p>
@@ -285,7 +287,7 @@ export default function Tickets() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="border-border/50">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
@@ -307,8 +309,8 @@ export default function Tickets() {
                   >
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-lg bg-primary/10 flex items-center justify-center">
-                          <MessageSquare className="h-4 w-4 text-primary" />
+                        <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-primary/20">
+                          <MessageSquare className="h-5 w-5 text-primary-foreground" />
                         </div>
                         <span className="font-medium">#{ticket.id}</span>
                       </div>
@@ -335,7 +337,7 @@ export default function Tickets() {
                       <span className="text-muted-foreground">{ticket.lastreply || ticket.date || "N/A"}</span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                         View
                         <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>

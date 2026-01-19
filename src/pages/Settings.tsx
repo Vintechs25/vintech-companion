@@ -10,15 +10,13 @@ import {
   User,
   Mail,
   Shield,
-  ExternalLink,
   Key,
   Headphones,
   CreditCard,
   Globe,
   Settings as SettingsIcon,
-  Bell,
   Lock,
-  Server,
+  ChevronRight,
 } from "lucide-react";
 
 interface UserProfile {
@@ -47,42 +45,28 @@ export default function Settings() {
     fetchProfile();
   }, [user?.userid]);
 
-  const whmcsClientArea = "https://billing.vintechdev.store/clientarea.php";
-  const whmcsPasswordChange = "https://billing.vintechdev.store/clientarea.php?action=changepw";
-  const whmcsDetails = "https://billing.vintechdev.store/clientarea.php?action=details";
-  const whmcsContacts = "https://billing.vintechdev.store/clientarea.php?action=contacts";
-
-  const QuickLinkCard = ({ icon: Icon, title, description, href, external = false }: {
+  const QuickLinkCard = ({ icon: Icon, title, description, href }: {
     icon: React.ElementType;
     title: string;
     description: string;
     href: string;
-    external?: boolean;
   }) => (
-    <Card className="hover:shadow-lg transition-all hover:border-primary/30 group">
-      <CardContent className="p-5">
-        <div className="flex items-start gap-4">
-          <div className="h-11 w-11 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-            <Icon className="h-5 w-5 text-primary" />
+    <Link to={href}>
+      <Card className="hover:shadow-lg transition-all duration-300 hover:border-primary/30 hover:-translate-y-1 group cursor-pointer h-full">
+        <CardContent className="p-5">
+          <div className="flex items-start gap-4">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
+              <Icon className="h-6 w-6 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h3 className="font-semibold group-hover:text-primary transition-colors">{title}</h3>
+              <p className="text-sm text-muted-foreground">{description}</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
           </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold group-hover:text-primary transition-colors">{title}</h3>
-            <p className="text-sm text-muted-foreground mb-3">{description}</p>
-            {external ? (
-              <Button variant="outline" size="sm" asChild>
-                <a href={href} target="_blank" rel="noopener noreferrer">
-                  Open <ExternalLink className="h-3 w-3 ml-1" />
-                </a>
-              </Button>
-            ) : (
-              <Button variant="outline" size="sm" asChild>
-                <Link to={href}>Open</Link>
-              </Button>
-            )}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+    </Link>
   );
 
   return (
@@ -94,10 +78,10 @@ export default function Settings() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Profile Card - Takes 2 columns */}
-        <Card className="lg:col-span-2">
+        <Card className="lg:col-span-2 border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
+              <User className="h-5 w-5 text-primary" />
               Profile Information
             </CardTitle>
             <CardDescription>Your account details</CardDescription>
@@ -111,8 +95,8 @@ export default function Settings() {
             ) : (
               <div className="space-y-6">
                 <div className="flex items-center gap-4">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-primary">
+                  <div className="h-20 w-20 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/25">
+                    <span className="text-2xl font-bold text-primary-foreground">
                       {profile?.firstname?.charAt(0) || "U"}{profile?.lastname?.charAt(0) || ""}
                     </span>
                   </div>
@@ -124,27 +108,20 @@ export default function Settings() {
                       <Mail className="h-4 w-4" />
                       {profile?.email || "N/A"}
                     </p>
-                    <Badge variant="secondary" className="mt-1">User ID: {user?.userid}</Badge>
+                    <Badge variant="secondary" className="mt-2">Account #{user?.userid}</Badge>
                   </div>
                 </div>
                 
                 <div className="border-t pt-4 mt-4">
-                <div className="flex flex-wrap gap-2">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    To update your profile details, please contact support.
+                  </p>
                   <Button variant="outline" asChild>
-                    <a href={whmcsDetails} target="_blank" rel="noopener noreferrer">
-                      <SettingsIcon className="h-4 w-4 mr-2" />
-                      Edit Profile
-                      <ExternalLink className="h-3 w-3 ml-2" />
-                    </a>
+                    <Link to="/tickets">
+                      <Headphones className="h-4 w-4 mr-2" />
+                      Contact Support
+                    </Link>
                   </Button>
-                  <Button variant="outline" asChild>
-                    <a href={whmcsContacts} target="_blank" rel="noopener noreferrer">
-                      <User className="h-4 w-4 mr-2" />
-                      Manage Contacts
-                      <ExternalLink className="h-3 w-3 ml-2" />
-                    </a>
-                  </Button>
-                </div>
                 </div>
               </div>
             )}
@@ -152,45 +129,47 @@ export default function Settings() {
         </Card>
 
         {/* Security Card */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5" />
+              <Shield className="h-5 w-5 text-primary" />
               Security
             </CardTitle>
             <CardDescription>Manage your security settings</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="p-4 rounded-lg bg-muted/50">
+            <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
               <div className="flex items-center gap-3 mb-2">
-                <Lock className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium">Password</span>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Lock className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <span className="font-medium">Password</span>
+                  <p className="text-xs text-muted-foreground">Keep your account secure</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Last changed: Unknown
-              </p>
-              <Button variant="outline" size="sm" className="w-full" asChild>
-                <a href={whmcsPasswordChange} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm" className="w-full mt-3" asChild>
+                <Link to="/forgot-password">
                   <Key className="h-4 w-4 mr-2" />
                   Change Password
-                  <ExternalLink className="h-3 w-3 ml-2" />
-                </a>
+                </Link>
               </Button>
             </div>
 
-            <div className="p-4 rounded-lg bg-muted/50">
+            <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
               <div className="flex items-center gap-3 mb-2">
-                <Shield className="h-5 w-5 text-muted-foreground" />
-                <span className="font-medium">Two-Factor Auth</span>
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <span className="font-medium">Two-Factor Auth</span>
+                  <p className="text-xs text-muted-foreground">Extra layer of security</p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-3">
-                Manage 2FA in WHMCS portal
-              </p>
-              <Button variant="outline" size="sm" className="w-full" asChild>
-                <a href={`${whmcsClientArea}?action=security`} target="_blank" rel="noopener noreferrer">
-                  Manage 2FA
-                  <ExternalLink className="h-3 w-3 ml-2" />
-                </a>
+              <Button variant="outline" size="sm" className="w-full mt-3" asChild>
+                <Link to="/tickets">
+                  Request Setup
+                </Link>
               </Button>
             </div>
           </CardContent>
@@ -203,17 +182,9 @@ export default function Settings() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <QuickLinkCard
             icon={CreditCard}
-            title="Billing Portal"
-            description="View invoices, payment methods, and billing history"
-            href={whmcsClientArea}
-            external
-          />
-          <QuickLinkCard
-            icon={Server}
-            title="CyberPanel"
-            description="Access your hosting control panel"
-            href="https://vintechdev.store:8090"
-            external
+            title="Invoices"
+            description="View and pay your invoices"
+            href="/invoices"
           />
           <QuickLinkCard
             icon={Headphones}
@@ -228,18 +199,22 @@ export default function Settings() {
             href="/domains"
           />
           <QuickLinkCard
-            icon={Bell}
-            title="Notifications"
-            description="Manage email notification preferences"
-            href={`${whmcsClientArea}?action=emails`}
-            external
+            icon={SettingsIcon}
+            title="My Hosting"
+            description="Manage your hosting services"
+            href="/hosting"
           />
           <QuickLinkCard
             icon={Mail}
             title="Email Support"
             description="Contact us at support@vintechdev.store"
-            href="mailto:support@vintechdev.store"
-            external
+            href="/tickets"
+          />
+          <QuickLinkCard
+            icon={Key}
+            title="Reset Password"
+            description="Change your account password"
+            href="/forgot-password"
           />
         </div>
       </div>
