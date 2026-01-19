@@ -1,5 +1,6 @@
 // Vintech Hosting API Client
-const API_BASE = "https://vintechdev.store/api";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const WHMCS_PROXY_URL = `${SUPABASE_URL}/functions/v1/whmcs-proxy`;
 
 interface ApiResponse<T = unknown> {
   result?: string;
@@ -89,19 +90,20 @@ interface OrderPayload {
   paymentmethod: string;
 }
 
-// Helper function for API requests
-async function apiRequest<T>(
-  endpoint: string,
-  options?: RequestInit
+// Helper function for WHMCS API requests via Edge Function proxy
+async function whmcsRequest<T>(
+  action: string,
+  params?: Record<string, unknown>
 ): Promise<T> {
-  const url = `${API_BASE}${endpoint}`;
-  
-  const response = await fetch(url, {
-    ...options,
+  const response = await fetch(WHMCS_PROXY_URL, {
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...options?.headers,
     },
+    body: JSON.stringify({
+      action,
+      ...params,
+    }),
   });
 
   if (!response.ok) {
@@ -114,13 +116,9 @@ async function apiRequest<T>(
 // Auth endpoints
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
-    return apiRequest<LoginResponse>("/whmcs.php", {
-      method: "POST",
-      body: JSON.stringify({
-        action: "login",
-        email,
-        password,
-      }),
+    return whmcsRequest<LoginResponse>("ValidateLogin", {
+      email,
+      password2: password,
     });
   },
 
@@ -130,34 +128,50 @@ export const authApi = {
     firstname: string,
     lastname: string
   ): Promise<ApiResponse> => {
-    return apiRequest<ApiResponse>("/whmcs.php", {
-      method: "POST",
-      body: JSON.stringify({
-        action: "register",
-        email,
-        password,
-        firstname,
-        lastname,
-      }),
+    return whmcsRequest<ApiResponse>("AddClient", {
+      email,
+      password2: password,
+      firstname,
+      lastname,
     });
   },
 };
 
-// Dashboard endpoint
+// Dashboard endpoint - combines multiple WHMCS calls
 export const dashboardApi = {
   get: async (userid: number): Promise<DashboardData> => {
-    return apiRequest<DashboardData>(`/dashboard.php?userid=${userid}`);
+    const [clientDetails, products, domains, invoices, tickets] = await Promise.all([
+      whmcsRequest<{ client?: { firstname: string; lastname: string; email: string } }>("GetClientsDetails", { clientid: userid }),
+      whmcsRequest<{ products?: { product: Service[] } }>("GetClientsProducts", { clientid: userid }),
+      whmcsRequest<{ domains?: { domain: Domain[] } }>("GetClientsDomains", { clientid: userid }),
+      whmcsRequest<{ invoices?: { invoice: Invoice[] } }>("GetInvoices", { userid }),
+      whmcsRequest<{ tickets?: { ticket: Ticket[] } }>("GetTickets", { clientid: userid }),
+    ]);
+
+    return {
+      user: {
+        firstname: clientDetails.client?.firstname || "",
+        lastname: clientDetails.client?.lastname || "",
+        email: clientDetails.client?.email || "",
+      },
+      services: clientDetails && products.products?.product ? products.products.product : [],
+      domains: domains.domains?.domain || [],
+      invoices: invoices.invoices?.invoice || [],
+      tickets: tickets.tickets?.ticket || [],
+    };
   },
 };
 
 // Services endpoints
 export const servicesApi = {
   getAll: async (userid: number): Promise<Service[]> => {
-    return apiRequest<Service[]>(`/services.php?userid=${userid}`);
+    const response = await whmcsRequest<{ products?: { product: Service[] } }>("GetClientsProducts", { clientid: userid });
+    return response.products?.product || [];
   },
 
   getOne: async (id: number): Promise<Service> => {
-    return apiRequest<Service>(`/service.php?id=${id}`);
+    const response = await whmcsRequest<{ products?: { product: Service[] } }>("GetClientsProducts", { serviceid: id });
+    return response.products?.product?.[0] || {} as Service;
   },
 
   action: async (
@@ -165,13 +179,10 @@ export const servicesApi = {
     action: string,
     data?: Record<string, unknown>
   ): Promise<ApiResponse> => {
-    return apiRequest<ApiResponse>("/service-action.php", {
-      method: "POST",
-      body: JSON.stringify({
-        service_id: serviceId,
-        action,
-        ...data,
-      }),
+    return whmcsRequest<ApiResponse>("ModuleCustom", {
+      serviceid: serviceId,
+      func_name: action,
+      ...data,
     });
   },
 };
@@ -179,18 +190,11 @@ export const servicesApi = {
 // Order endpoint
 export const orderApi = {
   create: async (payload: OrderPayload): Promise<ApiResponse> => {
-    // NOTE: This endpoint may expect form-encoded POST (not JSON)
-    const form = new URLSearchParams();
-    for (const [key, value] of Object.entries(payload)) {
-      form.set(key, String(value));
-    }
-
-    return apiRequest<ApiResponse>("/order.php", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: form.toString(),
+    return whmcsRequest<ApiResponse>("AddOrder", {
+      clientid: payload.userid,
+      pid: payload.product,
+      domain: payload.domain,
+      paymentmethod: payload.paymentmethod,
     });
   },
 };
@@ -198,7 +202,8 @@ export const orderApi = {
 // Invoices endpoint
 export const invoicesApi = {
   getAll: async (userid: number): Promise<Invoice[]> => {
-    return apiRequest<Invoice[]>(`/invoices.php?userid=${userid}`);
+    const response = await whmcsRequest<{ invoices?: { invoice: Invoice[] } }>("GetInvoices", { userid });
+    return response.invoices?.invoice || [];
   },
 };
 
@@ -235,24 +240,33 @@ interface DomainOrderResponse extends ApiResponse {
 // Domains endpoint
 export const domainsApi = {
   getAll: async (userid: number): Promise<Domain[]> => {
-    return apiRequest<Domain[]>(`/domains.php?userid=${userid}`);
+    const response = await whmcsRequest<{ domains?: { domain: Domain[] } }>("GetClientsDomains", { clientid: userid });
+    return response.domains?.domain || [];
   },
 
   search: async (domain: string): Promise<DomainSearchResult[]> => {
-    return apiRequest<DomainSearchResult[]>(`/domain-search.php?domain=${encodeURIComponent(domain)}`);
+    const response = await whmcsRequest<{ status?: string; result?: DomainSearchResult[] }>("DomainWhois", { domain });
+    return response.result || [{ domain, available: response.status === "available", price: "" }];
   },
 
   register: async (payload: DomainRegistrationPayload): Promise<DomainOrderResponse> => {
-    return apiRequest<DomainOrderResponse>("/domain-register.php", {
-      method: "POST",
-      body: JSON.stringify(payload),
+    return whmcsRequest<DomainOrderResponse>("AddOrder", {
+      clientid: payload.userid,
+      domain: payload.domain,
+      domaintype: "register",
+      regperiod: payload.years,
+      idprotection: payload.privacy,
+      paymentmethod: payload.paymentmethod,
+      ...payload.registrant,
     });
   },
 
   transfer: async (userid: number, domain: string, eppCode: string): Promise<DomainOrderResponse> => {
-    return apiRequest<DomainOrderResponse>("/domain-transfer.php", {
-      method: "POST",
-      body: JSON.stringify({ userid, domain, epp_code: eppCode }),
+    return whmcsRequest<DomainOrderResponse>("AddOrder", {
+      clientid: userid,
+      domain,
+      domaintype: "transfer",
+      eppcode: eppCode,
     });
   },
 };
@@ -260,11 +274,13 @@ export const domainsApi = {
 // Tickets endpoints
 export const ticketsApi = {
   getAll: async (userid: number): Promise<Ticket[]> => {
-    return apiRequest<Ticket[]>(`/tickets.php?userid=${userid}`);
+    const response = await whmcsRequest<{ tickets?: { ticket: Ticket[] } }>("GetTickets", { clientid: userid });
+    return response.tickets?.ticket || [];
   },
 
   getOne: async (ticketId: number): Promise<TicketDetail> => {
-    return apiRequest<TicketDetail>(`/ticket.php?id=${ticketId}`);
+    const response = await whmcsRequest<TicketDetail>("GetTicket", { ticketid: ticketId });
+    return response;
   },
 
   open: async (
@@ -274,25 +290,19 @@ export const ticketsApi = {
     department?: string,
     priority?: string
   ): Promise<ApiResponse> => {
-    return apiRequest<ApiResponse>("/openticket.php", {
-      method: "POST",
-      body: JSON.stringify({
-        userid,
-        subject,
-        message,
-        department,
-        priority,
-      }),
+    return whmcsRequest<ApiResponse>("OpenTicket", {
+      clientid: userid,
+      subject,
+      message,
+      deptid: department || "1",
+      priority: priority || "Medium",
     });
   },
 
   reply: async (ticketId: number, message: string): Promise<ApiResponse> => {
-    return apiRequest<ApiResponse>("/replyticket.php", {
-      method: "POST",
-      body: JSON.stringify({
-        ticketid: ticketId,
-        message,
-      }),
+    return whmcsRequest<ApiResponse>("AddTicketReply", {
+      ticketid: ticketId,
+      message,
     });
   },
 };
