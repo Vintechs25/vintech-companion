@@ -110,7 +110,10 @@ async function whmcsRequest<T>(
     }
   }
 
-  const response = await fetch(WHMCS_API_URL, {
+  // Pass action as query parameter since PHP may read from $_GET
+  const url = `${WHMCS_API_URL}?action=${encodeURIComponent(action)}`;
+
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/x-www-form-urlencoded",
