@@ -1,5 +1,5 @@
 // Vintech Hosting API Client
-const WHMCS_API_URL = "https://vintechdev.store/includes/api.php";
+const WHMCS_API_URL = "https://vintechdev.store/api/whmcs.php";
 const WHMCS_API_IDENTIFIER = "Fg08ttjpIYSm2QgOmcQJmyRrNC5Qv9CR";
 const WHMCS_API_SECRET = "xnDujdSB0XPqeARqqgJDcdXPpNX3t7Gj";
 
