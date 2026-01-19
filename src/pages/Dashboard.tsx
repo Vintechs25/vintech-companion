@@ -20,10 +20,7 @@ import {
   ShoppingCart,
   CreditCard,
   Headphones,
-  Database,
-  Mail,
-  FolderOpen,
-  Shield,
+  Settings,
   Zap,
   TrendingUp,
 } from "lucide-react";
@@ -53,7 +50,7 @@ function StatCard({
   };
 
   return (
-    <Card className="hover:shadow-lg transition-all hover:border-primary/30 group">
+    <Card className="hover:shadow-xl transition-all duration-300 hover:border-primary/30 group hover:-translate-y-1">
       <CardContent className="p-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
@@ -71,13 +68,13 @@ function StatCard({
               </div>
             )}
           </div>
-          <div className={`h-12 w-12 rounded-xl flex items-center justify-center ${colorClasses[color]}`}>
-            <Icon className="h-6 w-6" />
+          <div className={`h-14 w-14 rounded-2xl flex items-center justify-center ${colorClasses[color]} transition-transform group-hover:scale-110`}>
+            <Icon className="h-7 w-7" />
           </div>
         </div>
         <Link
           to={href}
-          className="mt-4 text-sm text-primary hover:underline inline-flex items-center gap-1 group-hover:gap-2 transition-all"
+          className="mt-4 text-sm text-primary hover:underline inline-flex items-center gap-1 group-hover:gap-2 transition-all font-medium"
         >
           View all <ArrowRight className="h-3 w-3" />
         </Link>
@@ -107,8 +104,8 @@ function LoadingSkeleton() {
           <Skeleton className="h-5 w-32" />
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div className="grid grid-cols-3 md:grid-cols-5 gap-3">
+            {[1, 2, 3, 4, 5].map((i) => (
               <Skeleton key={i} className="h-24 w-full rounded-xl" />
             ))}
           </div>
@@ -199,8 +196,7 @@ export default function Dashboard() {
     { title: "Register Domain", icon: Globe, href: "/domains/search" },
     { title: "Pay Invoice", icon: CreditCard, href: "/invoices" },
     { title: "Open Ticket", icon: Headphones, href: "/tickets" },
-    { title: "CyberPanel", icon: Server, href: "https://vintechdev.store:8090", external: true },
-    { title: "WHMCS Portal", icon: FolderOpen, href: "https://billing.vintechdev.store/clientarea.php", external: true },
+    { title: "Settings", icon: Settings, href: "/settings" },
   ];
 
   return (
@@ -222,7 +218,7 @@ export default function Dashboard() {
               Support
             </Link>
           </Button>
-          <Button asChild className="gradient-primary hover:opacity-90">
+          <Button asChild className="gradient-primary hover:opacity-90 shadow-lg shadow-primary/25">
             <Link to="/order">
               <Plus className="h-4 w-4 mr-2" />
               New Hosting
@@ -281,7 +277,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <Card>
+      <Card className="border-border/50">
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
@@ -290,14 +286,13 @@ export default function Dashboard() {
           <CardDescription>Common tasks at your fingertips</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             {quickActions.map((action) => (
               <QuickActionCard
                 key={action.title}
                 title={action.title}
                 icon={action.icon}
                 href={action.href}
-                external={action.external}
                 variant={action.variant}
               />
             ))}
@@ -308,7 +303,7 @@ export default function Dashboard() {
       {/* Recent Activity */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Recent Services */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">Recent Services</CardTitle>
@@ -332,17 +327,17 @@ export default function Dashboard() {
                   <Link
                     key={service.id}
                     to={`/hosting/${service.id}`}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                    className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted transition-all group hover:shadow-md"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                         <Server className="h-5 w-5 text-primary" />
                       </div>
                       <div className="min-w-0">
                         <p className="font-medium truncate group-hover:text-primary transition-colors">
                           {service.domain}
                         </p>
-                        <p className="text-sm text-muted-foreground truncate">{service.ip || service.product}</p>
+                        <p className="text-sm text-muted-foreground truncate">{service.product}</p>
                       </div>
                     </div>
                     <StatusBadge status={service.status} />
@@ -354,7 +349,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Recent Invoices */}
-        <Card>
+        <Card className="border-border/50">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">Recent Invoices</CardTitle>
@@ -379,10 +374,10 @@ export default function Dashboard() {
                   return (
                     <div
                       key={invoice.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                      className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted transition-all"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                           <FileText className="h-5 w-5 text-primary" />
                         </div>
                         <div>
@@ -421,7 +416,7 @@ export default function Dashboard() {
 
       {/* Recent Tickets */}
       {tickets.length > 0 && (
-        <Card>
+        <Card className="border-border/50">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-lg">Support Tickets</CardTitle>
@@ -437,10 +432,10 @@ export default function Dashboard() {
                 <Link
                   key={ticket.id}
                   to={`/tickets/${ticket.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                  className="flex items-center justify-between p-3 rounded-xl bg-muted/50 hover:bg-muted transition-all group hover:shadow-md"
                 >
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
                       <MessageSquare className="h-5 w-5 text-primary" />
                     </div>
                     <div className="min-w-0">

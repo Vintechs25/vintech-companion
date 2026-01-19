@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Zap, Mail, ExternalLink } from "lucide-react";
+import { Zap, Mail } from "lucide-react";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -26,9 +26,9 @@ const Footer = () => {
       { label: "Transfer Domain", href: "/domains/transfer", isAnchor: false },
     ],
     Resources: [
-      { label: "CyberPanel", href: "https://vintechdev.store:8090", isExternal: true },
-      { label: "Billing Portal", href: "https://billing.vintechdev.store", isExternal: true },
+      { label: "Knowledge Base", href: "#faq", isAnchor: true },
       { label: "FAQ", href: "#faq", isAnchor: true },
+      { label: "System Status", href: "#", isAnchor: true },
     ],
     Support: [
       { label: "Open Ticket", href: "/tickets", isAnchor: false },
@@ -50,7 +50,7 @@ const Footer = () => {
               <span className="text-xl font-bold text-gradient">Vintech Hosting</span>
             </Link>
             <p className="text-muted-foreground mb-6 max-w-sm">
-              Fast, reliable web hosting powered by Oracle Cloud infrastructure and CyberPanel control panel.
+              Fast, reliable web hosting built on enterprise-grade cloud infrastructure. Trusted by thousands of websites worldwide.
             </p>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Mail className="w-4 h-4" />
@@ -67,17 +67,7 @@ const Footer = () => {
               <ul className="space-y-3">
                 {links.map((link) => (
                   <li key={link.label}>
-                    {link.isExternal ? (
-                      <a
-                        href={link.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-1"
-                      >
-                        {link.label}
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    ) : link.isAnchor ? (
+                    {link.isAnchor ? (
                       <button
                         onClick={() => scrollToSection(link.href)}
                         className="text-muted-foreground hover:text-foreground transition-colors"
