@@ -96,26 +96,17 @@ async function whmcsRequest<T>(
   action: string,
   params?: Record<string, unknown>
 ): Promise<T> {
-  const formData = new URLSearchParams();
-  formData.append("identifier", WHMCS_API_IDENTIFIER);
-  formData.append("secret", WHMCS_API_SECRET);
-  formData.append("action", action);
-  formData.append("responsetype", "json");
-
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      if (value !== undefined && value !== null) {
-        formData.append(key, String(value));
-      }
-    }
-  }
+  const payload: Record<string, unknown> = {
+    action,
+    ...params,
+  };
 
   const response = await fetch(WHMCS_API_URL, {
     method: "POST",
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Type": "application/json",
     },
-    body: formData.toString(),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {
