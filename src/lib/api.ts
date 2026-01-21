@@ -497,12 +497,13 @@ export const domainsApi = {
   },
 
   register: async (payload: DomainRegistrationPayload): Promise<DomainOrderResponse> => {
+    // WHMCS AddOrder requires array syntax for domains
     const response = await whmcsRequest<DomainOrderResponse>("AddOrder", {
       clientid: payload.userid,
-      domain: payload.domain,
-      domaintype: "register",
-      regperiod: payload.years,
-      idprotection: payload.privacy ? 1 : 0,
+      "domain[0]": payload.domain,
+      "domaintype[0]": "register",
+      "regperiod[0]": payload.years,
+      "idprotection[0]": payload.privacy ? 1 : 0,
       paymentmethod: payload.paymentmethod,
       // Registrant contact info - using proper WHMCS field names
       contactid: "new",
