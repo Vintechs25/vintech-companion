@@ -25,7 +25,11 @@ import {
   Search,
   X,
   CheckCircle2,
+  ShoppingCart,
+  Shield,
+  Tag,
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 
 const planIcons = {
@@ -460,6 +464,100 @@ export default function OrderHosting() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Order Summary */}
+        {(selectedProduct || selectedDomainResult) && (
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5 text-primary" />
+                Order Summary
+              </CardTitle>
+              <CardDescription>Review your order before checkout</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Hosting Plan */}
+              {selectedProduct && (
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Server className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{selectedProduct.name} Hosting</p>
+                      <p className="text-sm text-muted-foreground">
+                        {WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.label || "Monthly"} billing
+                      </p>
+                      {WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.discount > 0 && (
+                        <Badge variant="secondary" className="mt-1 text-xs">
+                          <Tag className="h-3 w-3 mr-1" />
+                          {WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles].discount}% off
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">${hostingPrice.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      ${(hostingPrice / (WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.months || 1)).toFixed(2)}/mo
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Domain */}
+              {domain && (
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Globe className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium">{domain}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {domainOption === "register" ? "New domain registration (1 year)" : "Existing domain"}
+                      </p>
+                      {domainOption === "register" && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <Shield className="h-3 w-3 text-primary" />
+                          <span className="text-xs text-muted-foreground">WHOIS Privacy included</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {domainOption === "register" && selectedDomainResult ? (
+                      <>
+                        <p className="font-semibold">${domainPrice.toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">/year</p>
+                      </>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">No charge</Badge>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <Separator className="my-4" />
+
+              {/* Total */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-semibold">Total Due Today</p>
+                  <p className="text-sm text-muted-foreground">
+                    {domainOption === "register" && selectedDomainResult 
+                      ? "Hosting + Domain Registration"
+                      : "Hosting only"
+                    }
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-primary">${totalPrice.toFixed(2)}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Payment Method */}
         <Card>
