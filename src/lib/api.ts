@@ -393,59 +393,64 @@ export const domainsApi = {
 
   search: async (domain: string): Promise<DomainSearchResult[]> => {
     const baseDomain = domain.split(".")[0].toLowerCase().trim();
-    const tlds = [".com", ".net", ".org", ".io", ".co", ".dev", ".app", ".xyz"];
+    
+    // Extended list of popular TLDs
+    const tlds = [
+      ".com", ".net", ".org", ".io", ".co", ".dev", ".app", ".xyz",
+      ".info", ".biz", ".us", ".me", ".tv", ".cc", ".online", ".site",
+      ".store", ".tech", ".cloud", ".ai", ".pro", ".name", ".mobi", ".asia"
+    ];
     
     try {
-      // First, fetch TLD pricing from WHMCS
+      // Fetch TLD pricing from WHMCS first
       const pricingResponse = await whmcsRequest<{ 
         result?: string;
         pricing?: Record<string, { register?: Record<string, string> }>;
-        currency?: { prefix?: string };
       }>("GetTLDPricing", { currencyid: 1 });
       
       const pricing = pricingResponse.pricing || {};
       
-      // Check availability for multiple TLDs using DomainWhois
-      const results: DomainSearchResult[] = [];
-      
-      for (const tld of tlds) {
-        const fullDomain = `${baseDomain}${tld}`;
-        
-        try {
-          const whoisResponse = await whmcsRequest<{ 
-            status?: string; 
-            result?: string;
-          }>("DomainWhois", { domain: fullDomain });
-          
-          // Get price from WHMCS pricing or use fallback
+      // Check availability for ALL TLDs in parallel using Promise.all
+      const results = await Promise.all(
+        tlds.map(async (tld): Promise<DomainSearchResult> => {
+          const fullDomain = `${baseDomain}${tld}`;
           const tldKey = tld.replace(".", "");
           const tldPricing = pricing[tldKey]?.register;
           const price = tldPricing?.["1"] || tldPricing?.["2"] || "12.99";
           
-          const isAvailable = whoisResponse.status === "available";
-          
-          results.push({
-            domain: fullDomain,
-            available: isAvailable,
-            price: typeof price === "string" ? price : "12.99",
-          });
-        } catch {
-          // If individual TLD check fails, still include with unknown status
-          results.push({
-            domain: fullDomain,
-            available: false,
-            price: "12.99",
-          });
-        }
-      }
+          try {
+            const whoisResponse = await whmcsRequest<{ 
+              status?: string; 
+              result?: string;
+            }>("DomainWhois", { domain: fullDomain });
+            
+            return {
+              domain: fullDomain,
+              available: whoisResponse.status === "available",
+              price: typeof price === "string" ? price : "12.99",
+            };
+          } catch {
+            return {
+              domain: fullDomain,
+              available: false,
+              price: typeof price === "string" ? price : "12.99",
+            };
+          }
+        })
+      );
       
-      return results;
-    } catch (error) {
+      // Sort: available domains first, then by TLD popularity
+      return results.sort((a, b) => {
+        if (a.available && !b.available) return -1;
+        if (!a.available && b.available) return 1;
+        return tlds.indexOf(`.${a.domain.split(".").pop()}`) - tlds.indexOf(`.${b.domain.split(".").pop()}`);
+      });
+    } catch {
       // Return fallback results on error
-      return tlds.map((tld, i) => ({
+      return tlds.map((tld) => ({
         domain: `${baseDomain}${tld}`,
         available: true,
-        price: ["12.99", "14.99", "13.99", "39.99", "29.99", "15.99", "19.99", "9.99"][i] || "12.99",
+        price: "12.99",
       }));
     }
   },
