@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Rocket, CheckCircle } from "lucide-react";
+import { ArrowRight, Rocket, CheckCircle, LayoutDashboard, Plus } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const CTA = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <section className="py-24 relative overflow-hidden">
       {/* Gradient Background */}
@@ -16,15 +19,19 @@ const CTA = () => {
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/30 mb-8">
             <Rocket className="w-4 h-4 text-primary-foreground" />
-            <span className="text-sm font-medium text-primary-foreground">Launch Your Website Today</span>
+            <span className="text-sm font-medium text-primary-foreground">
+              {isAuthenticated ? "Manage Your Services" : "Launch Your Website Today"}
+            </span>
           </div>
 
           <h2 className="text-3xl md:text-5xl font-bold mb-6 text-primary-foreground">
-            Ready to Get Started?
+            {isAuthenticated ? "Welcome Back!" : "Ready to Get Started?"}
           </h2>
           
           <p className="text-xl text-primary-foreground/80 mb-8 max-w-xl mx-auto">
-            Join thousands of happy customers and get your website online in minutes with Vintech Hosting.
+            {isAuthenticated 
+              ? "Access your dashboard to manage your hosting, domains, and support tickets."
+              : "Join thousands of happy customers and get your website online in minutes with Vintech Hosting."}
           </p>
 
           {/* Benefits */}
@@ -44,28 +51,58 @@ const CTA = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button 
-              size="lg" 
-              className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg px-8 py-6 h-auto shadow-xl transition-all hover:scale-105"
-              asChild
-            >
-              <Link to="/register">
-                Get Started Now
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline" 
-              className="border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-lg px-8 py-6 h-auto"
-              asChild
-            >
-              <Link to="/tickets">Contact Sales</Link>
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button 
+                  size="lg" 
+                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg px-8 py-6 h-auto shadow-xl transition-all hover:scale-105"
+                  asChild
+                >
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="w-5 h-5 mr-2" />
+                    Go to Dashboard
+                  </Link>
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-lg px-8 py-6 h-auto"
+                  asChild
+                >
+                  <Link to="/order">
+                    <Plus className="w-5 h-5 mr-2" />
+                    New Project
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button 
+                  size="lg" 
+                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg px-8 py-6 h-auto shadow-xl transition-all hover:scale-105"
+                  asChild
+                >
+                  <Link to="/register">
+                    Get Started Now
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Link>
+                </Button>
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-lg px-8 py-6 h-auto"
+                  asChild
+                >
+                  <Link to="/tickets">Contact Sales</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           <p className="text-primary-foreground/50 mt-8 text-sm">
-            Starting at KES 167/month · Cancel anytime
+            {isAuthenticated 
+              ? "Need help? Contact our 24/7 support team"
+              : "Starting at KES 167/month · Cancel anytime"}
           </p>
         </div>
       </div>

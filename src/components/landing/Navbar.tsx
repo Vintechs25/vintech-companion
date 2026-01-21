@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Server } from "lucide-react";
+import { Menu, X, Server, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { isAuthenticated } = useAuth();
 
   const navLinks = [
     { href: "#features", label: "Features", isAnchor: true },
@@ -58,12 +60,23 @@ const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-2">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">Sign In</Link>
-            </Button>
-            <Button size="sm" asChild>
-              <Link to="/register">Get Started</Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button size="sm" asChild>
+                <Link to="/dashboard">
+                  <LayoutDashboard className="h-4 w-4 mr-2" />
+                  Dashboard
+                </Link>
+              </Button>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login">Sign In</Link>
+                </Button>
+                <Button size="sm" asChild>
+                  <Link to="/register">Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -101,12 +114,23 @@ const Navbar = () => {
                 )
               )}
               <div className="flex gap-2 pt-4 mt-2 border-t border-border">
-                <Button variant="outline" size="sm" className="flex-1" asChild>
-                  <Link to="/login">Sign In</Link>
-                </Button>
-                <Button size="sm" className="flex-1" asChild>
-                  <Link to="/register">Get Started</Link>
-                </Button>
+                {isAuthenticated ? (
+                  <Button size="sm" className="flex-1" asChild>
+                    <Link to="/dashboard">
+                      <LayoutDashboard className="h-4 w-4 mr-2" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" size="sm" className="flex-1" asChild>
+                      <Link to="/login">Sign In</Link>
+                    </Button>
+                    <Button size="sm" className="flex-1" asChild>
+                      <Link to="/register">Get Started</Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
