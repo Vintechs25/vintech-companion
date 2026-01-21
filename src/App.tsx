@@ -21,6 +21,7 @@ import DomainSearch from "./pages/DomainSearch";
 import DomainRegister from "./pages/DomainRegister";
 import DomainTransfer from "./pages/DomainTransfer";
 import Invoices from "./pages/Invoices";
+import InvoiceDetail from "./pages/InvoiceDetail";
 import Tickets from "./pages/Tickets";
 import TicketDetail from "./pages/TicketDetail";
 import Settings from "./pages/Settings";
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="order" element={<OrderHosting />} />
                 <Route path="domains" element={<Domains />} />
                 <Route path="invoices" element={<Invoices />} />
+                <Route path="invoices/:id" element={<InvoiceDetail />} />
                 <Route path="tickets" element={<Tickets />} />
                 <Route path="tickets/:id" element={<TicketDetail />} />
                 <Route path="settings" element={<Settings />} />
