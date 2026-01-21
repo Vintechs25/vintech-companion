@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Clock } from "lucide-react";
+import { ArrowRight, Zap, Shield, Clock, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Hero = () => {
+  const { isAuthenticated } = useAuth();
+
   const scrollToPricing = () => {
     const element = document.querySelector("#pricing");
     if (element) {
@@ -37,15 +40,34 @@ const Hero = () => {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-16">
-            <Button size="lg" className="h-12 px-8" asChild>
-              <Link to="/register">
-                Start Free Trial
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Link>
-            </Button>
-            <Button size="lg" variant="outline" className="h-12 px-8" onClick={scrollToPricing}>
-              View Pricing
-            </Button>
+            {isAuthenticated ? (
+              <>
+                <Button size="lg" className="h-12 px-8" asChild>
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    Go to Dashboard
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="h-12 px-8" asChild>
+                  <Link to="/order">
+                    Order New Hosting
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button size="lg" className="h-12 px-8" asChild>
+                  <Link to="/register">
+                    Start Free Trial
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="h-12 px-8" onClick={scrollToPricing}>
+                  View Pricing
+                </Button>
+              </>
+            )}
           </div>
 
           {/* Trust Indicators */}
