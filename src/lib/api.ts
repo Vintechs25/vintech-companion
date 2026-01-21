@@ -324,13 +324,19 @@ export const orderApi = {
     orderParams["domain[0]"] = payload.domain;
     orderParams["billingcycle[0]"] = payload.billingcycle;
 
-    // If registering a new domain, add domain registration to the same order
+    // If registering a new domain, add domain registration separately
+    // Domain registration requires proper array indexing for domains
     if (payload.registerDomain) {
+      // For domain registration bundled with hosting, use separate domain array
       orderParams["domaintype[0]"] = "register";
+      // Use regperiod from payload, defaulting to what's valid for most TLDs
       orderParams["regperiod[0]"] = payload.domainRegPeriod || 1;
       if (payload.idProtection) {
         orderParams["idprotection[0]"] = 1;
       }
+    } else {
+      // For existing domains, don't include domain registration params
+      orderParams["domaintype[0]"] = "none";
     }
 
     const response = await whmcsRequest<ApiResponse>("AddOrder", orderParams);
