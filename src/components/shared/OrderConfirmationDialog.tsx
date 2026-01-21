@@ -110,7 +110,7 @@ export function OrderConfirmationDialog({
                   <p className="font-medium">{orderDetails.domain}</p>
                   <p className="text-sm text-muted-foreground">Domain registration (1 year)</p>
                 </div>
-                <p className="font-semibold">${orderDetails.domainPrice.toFixed(2)}</p>
+                <p className="font-semibold">KES {orderDetails.domainPrice.toLocaleString()}</p>
               </div>
             )}
 
@@ -133,7 +133,7 @@ export function OrderConfirmationDialog({
               <span className="text-lg text-primary">
                 {formatPrice(orderDetails.totalPrice)}
                 {orderDetails.domainPrice > 0 && (
-                  <span className="text-sm font-normal text-muted-foreground"> + ${orderDetails.domainPrice.toFixed(2)}</span>
+                  <span className="text-sm font-normal text-muted-foreground"> + KES {orderDetails.domainPrice.toLocaleString()}</span>
                 )}
               </span>
             </div>

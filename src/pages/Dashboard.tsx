@@ -235,10 +235,9 @@ export default function Dashboard() {
                   {unpaidInvoices.length > 1 ? "s" : ""}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  Total: $
-                  {unpaidInvoices
+                  Total: KES {unpaidInvoices
                     .reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0)
-                    .toFixed(2)}
+                    .toLocaleString()}
                 </p>
               </div>
             </div>
@@ -352,7 +351,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="font-medium">${invoice.total}</span>
+                      <span className="font-medium">KES {parseFloat(invoice.total).toLocaleString()}</span>
                       <StatusBadge status={invoice.status} size="sm" />
                     </div>
                   </div>

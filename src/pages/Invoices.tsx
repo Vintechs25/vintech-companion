@@ -112,7 +112,7 @@ export default function Invoices() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Total Paid</p>
-              <p className="text-2xl font-semibold text-foreground mt-1">${totalPaid.toFixed(2)}</p>
+              <p className="text-2xl font-semibold text-foreground mt-1">KES {totalPaid.toLocaleString()}</p>
             </div>
             <div className="h-10 w-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-emerald-600" />
@@ -123,7 +123,7 @@ export default function Invoices() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-muted-foreground">Outstanding</p>
-              <p className="text-2xl font-semibold text-foreground mt-1">${totalUnpaid.toFixed(2)}</p>
+              <p className="text-2xl font-semibold text-foreground mt-1">KES {totalUnpaid.toLocaleString()}</p>
             </div>
             <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
               <Clock className="h-5 w-5 text-amber-600" />
@@ -212,7 +212,7 @@ export default function Invoices() {
                     <TableCell className="text-sm text-muted-foreground">{invoice.date || "—"}</TableCell>
                     <TableCell className="text-sm">{invoice.duedate}</TableCell>
                     <TableCell>
-                      <span className="font-semibold">${invoice.total}</span>
+                      <span className="font-semibold">KES {parseFloat(invoice.total).toLocaleString()}</span>
                     </TableCell>
                     <TableCell>
                       <StatusBadge status={invoice.status} size="sm" />

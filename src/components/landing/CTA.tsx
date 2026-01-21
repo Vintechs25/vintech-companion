@@ -65,7 +65,7 @@ const CTA = () => {
           </div>
 
           <p className="text-primary-foreground/50 mt-8 text-sm">
-            Starting at $4.99/month · Cancel anytime
+            Starting at KES 167/month · Cancel anytime
           </p>
         </div>
       </div>

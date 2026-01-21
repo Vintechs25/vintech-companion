@@ -17,12 +17,12 @@ const domainSchema = z.string()
   .regex(/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})?$/, "Invalid domain format");
 
 const tldPricing = [
-  { tld: ".com", price: "12.99", popular: true },
-  { tld: ".net", price: "14.99", popular: true },
-  { tld: ".org", price: "13.99", popular: false },
-  { tld: ".io", price: "39.99", popular: true },
-  { tld: ".co", price: "29.99", popular: false },
-  { tld: ".dev", price: "15.99", popular: false },
+  { tld: ".com", price: "1500", popular: true },
+  { tld: ".net", price: "1800", popular: true },
+  { tld: ".org", price: "1600", popular: false },
+  { tld: ".io", price: "4500", popular: true },
+  { tld: ".co", price: "3500", popular: false },
+  { tld: ".dev", price: "2000", popular: false },
 ];
 
 export default function DomainSearch() {
@@ -69,10 +69,10 @@ export default function DomainSearch() {
       });
       // Show mock results for demo
       setResults([
-        { domain: `${domain}${hasTld ? "" : ".com"}`, available: true, price: "12.99" },
-        { domain: `${domain.split(".")[0]}.net`, available: true, price: "14.99" },
-        { domain: `${domain.split(".")[0]}.org`, available: false, price: "13.99" },
-        { domain: `${domain.split(".")[0]}.io`, available: true, price: "39.99" },
+        { domain: `${domain}${hasTld ? "" : ".com"}`, available: true, price: "1500" },
+        { domain: `${domain.split(".")[0]}.net`, available: true, price: "1800" },
+        { domain: `${domain.split(".")[0]}.org`, available: false, price: "1600" },
+        { domain: `${domain.split(".")[0]}.io`, available: true, price: "4500" },
       ]);
     } finally {
       setIsSearching(false);
@@ -172,7 +172,7 @@ export default function DomainSearch() {
                         {result.available && (
                           <>
                             <div className="text-right">
-                              <p className="text-2xl font-bold">${result.price}</p>
+                              <p className="text-2xl font-bold">KES {parseFloat(result.price).toLocaleString()}</p>
                               <p className="text-sm text-muted-foreground">/year</p>
                             </div>
                             <Button 
@@ -210,7 +210,7 @@ export default function DomainSearch() {
                   <Card key={tld.tld} className="text-center hover:border-primary/50 transition-colors">
                     <CardContent className="pt-6">
                       <p className="text-xl font-bold text-primary">{tld.tld}</p>
-                      <p className="text-2xl font-bold mt-2">${tld.price}</p>
+                      <p className="text-2xl font-bold mt-2">KES {parseFloat(tld.price).toLocaleString()}</p>
                       <p className="text-sm text-muted-foreground">/year</p>
                       {tld.popular && (
                         <Badge className="mt-2" variant="secondary">Popular</Badge>

@@ -113,9 +113,9 @@ export default function DomainRegister() {
     }
   }, [user]);
 
-  const basePrice = 12.99;
+  const basePrice = 1500; // KES
   const yearCount = parseInt(years);
-  const totalPrice = (basePrice * yearCount).toFixed(2);
+  const totalPrice = basePrice * yearCount;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -372,7 +372,7 @@ export default function DomainRegister() {
                     </div>
 
                     <Button type="submit" className="w-full gradient-primary" size="lg" disabled={isSubmitting}>
-                      {isSubmitting ? "Processing..." : `Continue to Payment - $${totalPrice}`}
+                      {isSubmitting ? "Processing..." : `Continue to Payment - KES ${totalPrice.toLocaleString()}`}
                     </Button>
                   </form>
                 </CardContent>
@@ -388,7 +388,7 @@ export default function DomainRegister() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{domain}</span>
-                    <span>${basePrice}/yr</span>
+                    <span>KES {basePrice.toLocaleString()}/yr</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Period</span>
@@ -400,7 +400,7 @@ export default function DomainRegister() {
                   </div>
                   <div className="border-t pt-4 flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>${totalPrice}</span>
+                    <span>KES {totalPrice.toLocaleString()}</span>
                   </div>
 
                   <div className="pt-4 space-y-2">
