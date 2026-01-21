@@ -1,63 +1,173 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  LayoutDashboard,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  LayoutGrid,
   Server,
-  ShoppingCart,
   Globe,
   FileText,
-  MessageSquare,
+  MessageCircle,
   Settings,
   LogOut,
-  User,
+  Plus,
   ChevronDown,
-  Moon,
-  Sun,
-  Zap,
+  CreditCard,
+  HelpCircle,
+  ExternalLink,
+  Menu,
+  X,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
 
+// DigitalOcean-style navigation items
 const navItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "My Hosting", url: "/hosting", icon: Server },
-  { title: "Order Hosting", url: "/order", icon: ShoppingCart },
+  { title: "Overview", url: "/dashboard", icon: LayoutGrid },
+  { title: "Projects", url: "/hosting", icon: Server },
   { title: "Domains", url: "/domains", icon: Globe },
-  { title: "Invoices", url: "/invoices", icon: FileText },
-  { title: "Support", url: "/tickets", icon: MessageSquare },
+  { title: "Billing", url: "/invoices", icon: FileText },
+  { title: "Support", url: "/tickets", icon: MessageCircle },
 ];
 
-const settingsItems = [
-  { title: "Account Settings", url: "/settings", icon: Settings },
-];
-
-function AppSidebar() {
+// Sidebar component with icon-based navigation
+function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const location = useLocation();
+
+  const isActive = (path: string) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
+
+  return (
+    <aside
+      className={cn(
+        "fixed left-0 top-0 z-40 h-screen border-r border-border bg-sidebar transition-all duration-200",
+        collapsed ? "w-16" : "w-56"
+      )}
+    >
+      {/* Logo */}
+      <div className="flex h-14 items-center justify-between border-b border-border px-3">
+        <Link to="/dashboard" className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Server className="h-4 w-4" />
+          </div>
+          {!collapsed && (
+            <span className="font-semibold text-foreground">Vintech</span>
+          )}
+        </Link>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 lg:hidden"
+          onClick={onToggle}
+        >
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Navigation */}
+      <nav className="flex flex-col gap-1 p-2">
+        {navItems.map((item) => {
+          const active = isActive(item.url);
+          const NavButton = (
+            <Link
+              key={item.title}
+              to={item.url}
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                active
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              )}
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>{item.title}</span>}
+            </Link>
+          );
+
+          if (collapsed) {
+            return (
+              <Tooltip key={item.title} delayDuration={0}>
+                <TooltipTrigger asChild>{NavButton}</TooltipTrigger>
+                <TooltipContent side="right" sideOffset={10}>
+                  {item.title}
+                </TooltipContent>
+              </Tooltip>
+            );
+          }
+
+          return NavButton;
+        })}
+      </nav>
+
+      {/* Create Button */}
+      <div className="absolute bottom-20 left-0 right-0 px-2">
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Button
+              asChild
+              className={cn(
+                "w-full gap-2",
+                collapsed ? "px-0" : ""
+              )}
+            >
+              <Link to="/order">
+                <Plus className="h-4 w-4" />
+                {!collapsed && <span>Create</span>}
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          {collapsed && (
+            <TooltipContent side="right" sideOffset={10}>
+              Create Project
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </div>
+
+      {/* Settings at bottom */}
+      <div className="absolute bottom-4 left-0 right-0 px-2">
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Link
+              to="/settings"
+              className={cn(
+                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                location.pathname === "/settings" && "bg-primary/10 text-primary"
+              )}
+            >
+              <Settings className="h-4 w-4 shrink-0" />
+              {!collapsed && <span>Settings</span>}
+            </Link>
+          </TooltipTrigger>
+          {collapsed && (
+            <TooltipContent side="right" sideOffset={10}>
+              Settings
+            </TooltipContent>
+          )}
+        </Tooltip>
+      </div>
+    </aside>
+  );
+}
+
+// Top header with user profile and billing
+function TopHeader({ onMenuClick }: { onMenuClick: () => void }) {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
-
-  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const handleLogout = () => {
     logout();
@@ -65,169 +175,130 @@ function AppSidebar() {
   };
 
   return (
-    <Sidebar className="border-r border-border">
-      <SidebarHeader className="p-4 border-b border-border">
-        <Link to="/dashboard" className="flex items-center gap-2">
-          <div className="p-1.5 rounded-xl gradient-primary shadow-lg shadow-primary/25">
-            <Zap className="h-5 w-5 text-primary-foreground" />
-          </div>
-          <span className="text-lg font-bold text-gradient">Vintech</span>
-        </Link>
-      </SidebarHeader>
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 lg:hidden"
+          onClick={onMenuClick}
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
 
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className={isActive(item.url) ? "bg-primary/10 text-primary" : ""}
-                  >
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Account</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {settingsItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className={isActive(item.url) ? "bg-primary/10 text-primary" : ""}
-                  >
-                    <Link to={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton onClick={handleLogout} className="text-destructive hover:text-destructive hover:bg-destructive/10">
-                  <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-
-      <SidebarFooter className="p-4 border-t border-border">
-        <div className="flex items-center gap-3">
-          <div className="h-9 w-9 rounded-xl bg-primary/20 flex items-center justify-center">
-            <User className="h-4 w-4 text-primary" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">Account #{user?.userid}</p>
-            <p className="text-xs text-muted-foreground truncate">Hosting Client</p>
-          </div>
+        {/* Breadcrumb or context */}
+        <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+          <span>Dashboard</span>
         </div>
-      </SidebarFooter>
-    </Sidebar>
-  );
-}
+      </div>
 
-function ThemeToggle() {
-  const [isDark, setIsDark] = useState(false);
+      <div className="flex items-center gap-2">
+        {/* Help */}
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+              <HelpCircle className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Help & Docs</TooltipContent>
+        </Tooltip>
 
-  useEffect(() => {
-    const isDarkMode = document.documentElement.classList.contains("dark");
-    setIsDark(isDarkMode);
-  }, []);
+        {/* Theme Toggle */}
+        <ThemeToggle />
 
-  const toggleTheme = () => {
-    const newIsDark = !isDark;
-    setIsDark(newIsDark);
-    document.documentElement.classList.toggle("dark", newIsDark);
-    localStorage.setItem("theme", newIsDark ? "dark" : "light");
-  };
-
-  return (
-    <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-xl">
-      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-    </Button>
+        {/* User Menu */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="gap-2 pl-2 pr-3">
+              <Avatar className="h-7 w-7">
+                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                  {user?.userid ? `U${user.userid}`.slice(0, 2).toUpperCase() : "VT"}
+                </AvatarFallback>
+              </Avatar>
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium">Account #{user?.userid}</p>
+                <p className="text-xs text-muted-foreground">Vintech Hosting</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link to="/settings" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/invoices" className="gap-2">
+                <CreditCard className="h-4 w-4" />
+                Billing
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <a
+                href="https://billing.vintechdev.store"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="gap-2"
+              >
+                <ExternalLink className="h-4 w-4" />
+                WHMCS Portal
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="gap-2 text-destructive focus:text-destructive"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
   );
 }
 
 export default function ClientLayout() {
-  const { logout, user } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    }
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <AppSidebar />
-        
-        <div className="flex-1 flex flex-col">
-          {/* Top Header */}
-          <header className="h-14 border-b border-border flex items-center justify-between px-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <ThemeToggle />
-              
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2 rounded-xl">
-                    <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center">
-                      <User className="h-4 w-4 text-primary" />
-                    </div>
-                    <span className="hidden sm:inline font-medium">Account</span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link to="/settings" className="flex items-center gap-2">
-                      <Settings className="h-4 w-4" />
-                      Settings
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Logout
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </header>
+    <div className="min-h-screen bg-background">
+      {/* Mobile overlay */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
 
-          {/* Main Content */}
-          <main className="flex-1 p-6 overflow-auto">
-            <Outlet />
-          </main>
-        </div>
+      {/* Sidebar - hidden on mobile, shown on lg+ */}
+      <div className={cn("hidden lg:block", mobileMenuOpen && "!block")}>
+        <Sidebar
+          collapsed={sidebarCollapsed && !mobileMenuOpen}
+          onToggle={() => setMobileMenuOpen(false)}
+        />
       </div>
-    </SidebarProvider>
+
+      {/* Main content */}
+      <div
+        className={cn(
+          "min-h-screen transition-all duration-200",
+          sidebarCollapsed ? "lg:pl-16" : "lg:pl-56"
+        )}
+      >
+        <TopHeader onMenuClick={() => setMobileMenuOpen(true)} />
+
+        <main className="p-4 md:p-6 lg:p-8">
+          <Outlet />
+        </main>
+      </div>
+    </div>
   );
 }

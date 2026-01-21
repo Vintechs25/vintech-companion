@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -28,39 +29,41 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/domains/search" element={<DomainSearch />} />
-            <Route path="/domains/register" element={<DomainRegister />} />
-            <Route path="/domains/transfer" element={<DomainTransfer />} />
-            
-            {/* Protected client area */}
-            <Route path="/" element={<ProtectedRoute><ClientLayout /></ProtectedRoute>}>
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route path="hosting" element={<MyHosting />} />
-              <Route path="hosting/:id" element={<ServiceDetails />} />
-              <Route path="order" element={<OrderHosting />} />
-              <Route path="domains" element={<Domains />} />
-              <Route path="invoices" element={<Invoices />} />
-              <Route path="tickets" element={<Tickets />} />
-              <Route path="tickets/:id" element={<TicketDetail />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-            
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider defaultTheme="system" storageKey="vintech-theme">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/domains/search" element={<DomainSearch />} />
+              <Route path="/domains/register" element={<DomainRegister />} />
+              <Route path="/domains/transfer" element={<DomainTransfer />} />
+              
+              {/* Protected client area */}
+              <Route path="/" element={<ProtectedRoute><ClientLayout /></ProtectedRoute>}>
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route path="hosting" element={<MyHosting />} />
+                <Route path="hosting/:id" element={<ServiceDetails />} />
+                <Route path="order" element={<OrderHosting />} />
+                <Route path="domains" element={<Domains />} />
+                <Route path="invoices" element={<Invoices />} />
+                <Route path="tickets" element={<Tickets />} />
+                <Route path="tickets/:id" element={<TicketDetail />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+              
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
