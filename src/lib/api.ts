@@ -392,41 +392,61 @@ export const domainsApi = {
   },
 
   search: async (domain: string): Promise<DomainSearchResult[]> => {
-    // Ensure domain has a TLD for the WHMCS DomainWhois API
-    const domainWithTld = domain.includes(".") ? domain : `${domain}.com`;
-    const baseDomain = domain.split(".")[0];
+    const baseDomain = domain.split(".")[0].toLowerCase().trim();
+    const tlds = [".com", ".net", ".org", ".io", ".co", ".dev", ".app", ".xyz"];
     
     try {
-      const response = await whmcsRequest<{ status?: string; result?: string; message?: string }>("DomainWhois", { 
-        domain: domainWithTld 
-      });
+      // First, fetch TLD pricing from WHMCS
+      const pricingResponse = await whmcsRequest<{ 
+        result?: string;
+        pricing?: Record<string, { register?: Record<string, string> }>;
+        currency?: { prefix?: string };
+      }>("GetTLDPricing", { currencyid: 1 });
       
-      // WHMCS DomainWhois returns status: "available" or "unavailable", or result: "error"
-      if (response.result === "error") {
-        // Return mock results if API fails (e.g., invalid domain)
-        return [
-          { domain: `${baseDomain}.com`, available: true, price: "12.99" },
-          { domain: `${baseDomain}.net`, available: true, price: "14.99" },
-          { domain: `${baseDomain}.org`, available: true, price: "13.99" },
-        ];
+      const pricing = pricingResponse.pricing || {};
+      
+      // Check availability for multiple TLDs using DomainWhois
+      const results: DomainSearchResult[] = [];
+      
+      for (const tld of tlds) {
+        const fullDomain = `${baseDomain}${tld}`;
+        
+        try {
+          const whoisResponse = await whmcsRequest<{ 
+            status?: string; 
+            result?: string;
+          }>("DomainWhois", { domain: fullDomain });
+          
+          // Get price from WHMCS pricing or use fallback
+          const tldKey = tld.replace(".", "");
+          const tldPricing = pricing[tldKey]?.register;
+          const price = tldPricing?.["1"] || tldPricing?.["2"] || "12.99";
+          
+          const isAvailable = whoisResponse.status === "available";
+          
+          results.push({
+            domain: fullDomain,
+            available: isAvailable,
+            price: typeof price === "string" ? price : "12.99",
+          });
+        } catch {
+          // If individual TLD check fails, still include with unknown status
+          results.push({
+            domain: fullDomain,
+            available: false,
+            price: "12.99",
+          });
+        }
       }
       
-      const isAvailable = response.status === "available";
-      
-      // Return the searched domain plus alternatives
-      return [
-        { domain: domainWithTld, available: isAvailable, price: "12.99" },
-        { domain: `${baseDomain}.net`, available: true, price: "14.99" },
-        { domain: `${baseDomain}.org`, available: true, price: "13.99" },
-        { domain: `${baseDomain}.io`, available: true, price: "39.99" },
-      ];
+      return results;
     } catch (error) {
       // Return fallback results on error
-      return [
-        { domain: `${baseDomain}.com`, available: true, price: "12.99" },
-        { domain: `${baseDomain}.net`, available: true, price: "14.99" },
-        { domain: `${baseDomain}.org`, available: true, price: "13.99" },
-      ];
+      return tlds.map((tld, i) => ({
+        domain: `${baseDomain}${tld}`,
+        available: true,
+        price: ["12.99", "14.99", "13.99", "39.99", "29.99", "15.99", "19.99", "9.99"][i] || "12.99",
+      }));
     }
   },
 
