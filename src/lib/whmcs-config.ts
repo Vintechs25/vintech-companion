@@ -64,10 +64,9 @@ export const WHMCS_CONFIG = {
     annually: { value: "annually", label: "Annually", months: 12, discount: 15 },
   },
 
-  // Payment methods
+// Payment methods
   paymentMethods: [
-    { id: "paypal", name: "PayPal", description: "Pay securely with PayPal" },
-    { id: "stripe", name: "Credit Card", description: "Visa, Mastercard, Amex" },
+    { id: "paystack", name: "Pay with M-Pesa, Card & Bank", description: "Debit/Credit Cards, M-Pesa, Bank Transfer" },
   ],
 
   // Ticket priorities

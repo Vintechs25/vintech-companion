@@ -65,8 +65,7 @@ const countries = [
 ];
 
 const paymentMethods = [
-  { id: "paypal", name: "PayPal", icon: Wallet, description: "Pay securely with PayPal" },
-  { id: "stripe", name: "Credit Card", icon: CreditCard, description: "Visa, Mastercard, Amex" },
+  { id: "paystack", name: "Pay with M-Pesa, Card & Bank", icon: CreditCard, description: "Debit/Credit Cards, M-Pesa, Bank Transfer" },
 ];
 
 const registrantSchema = z.object({
@@ -91,7 +90,7 @@ export default function DomainRegister() {
   
   const [years, setYears] = useState("1");
   const [privacy, setPrivacy] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState("paypal");
+  const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     firstname: "",
