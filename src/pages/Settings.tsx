@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { dashboardApi } from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +16,7 @@ import {
   Settings as SettingsIcon,
   Lock,
   ChevronRight,
+  Server,
 } from "lucide-react";
 
 interface UserProfile {
@@ -51,145 +51,145 @@ export default function Settings() {
     description: string;
     href: string;
   }) => (
-    <Link to={href}>
-      <Card className="hover:shadow-lg transition-all duration-300 hover:border-primary/30 hover:-translate-y-1 group cursor-pointer h-full">
-        <CardContent className="p-5">
-          <div className="flex items-start gap-4">
-            <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 group-hover:scale-110 transition-all duration-300">
-              <Icon className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold group-hover:text-primary transition-colors">{title}</h3>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
+    <Link to={href} className="group">
+      <div className="rounded-lg border border-border bg-card p-4 transition-all duration-200 hover:border-foreground/20 hover:shadow-sm h-full">
+        <div className="flex items-start gap-3">
+          <div className="h-9 w-9 rounded-lg bg-foreground/5 flex items-center justify-center shrink-0 group-hover:bg-foreground/10 transition-colors">
+            <Icon className="h-5 w-5 text-foreground/70" />
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-medium text-sm group-hover:text-primary transition-colors">{title}</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
+        </div>
+      </div>
     </Link>
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 max-w-4xl">
       <div>
-        <h1 className="text-3xl font-bold">Account Settings</h1>
-        <p className="text-muted-foreground">Manage your account and preferences</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <p className="text-sm text-muted-foreground">Manage your account and preferences</p>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Profile Card - Takes 2 columns */}
-        <Card className="lg:col-span-2 border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
-              Profile Information
-            </CardTitle>
-            <CardDescription>Your account details</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
+      {/* Profile Section */}
+      <div className="rounded-lg border border-border bg-card">
+        <div className="p-5 border-b border-border">
+          <h2 className="font-medium flex items-center gap-2">
+            <User className="h-4 w-4 text-muted-foreground" />
+            Profile
+          </h2>
+        </div>
+        <div className="p-5">
+          {isLoading ? (
+            <div className="flex items-center gap-4">
+              <Skeleton className="h-14 w-14 rounded-lg" />
+              <div className="space-y-2">
+                <Skeleton className="h-5 w-36" />
+                <Skeleton className="h-4 w-48" />
               </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-20 w-20 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/25">
-                    <span className="text-2xl font-bold text-primary-foreground">
-                      {profile?.firstname?.charAt(0) || "U"}{profile?.lastname?.charAt(0) || ""}
-                    </span>
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">
-                      {profile?.firstname} {profile?.lastname}
-                    </h3>
-                    <p className="text-muted-foreground flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      {profile?.email || "N/A"}
-                    </p>
-                    <Badge variant="secondary" className="mt-2">Account #{user?.userid}</Badge>
-                  </div>
-                </div>
-                
-                <div className="border-t pt-4 mt-4">
-                  <p className="text-sm text-muted-foreground mb-3">
-                    To update your profile details, please contact support.
-                  </p>
-                  <Button variant="outline" asChild>
-                    <Link to="/tickets">
-                      <Headphones className="h-4 w-4 mr-2" />
-                      Contact Support
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Security Card */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary" />
-              Security
-            </CardTitle>
-            <CardDescription>Manage your security settings</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Lock className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <span className="font-medium">Password</span>
-                  <p className="text-xs text-muted-foreground">Keep your account secure</p>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" className="w-full mt-3" asChild>
-                <Link to="/forgot-password">
-                  <Key className="h-4 w-4 mr-2" />
-                  Change Password
-                </Link>
-              </Button>
             </div>
-
-            <div className="p-4 rounded-xl bg-muted/50 border border-border/50">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Shield className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <span className="font-medium">Two-Factor Auth</span>
-                  <p className="text-xs text-muted-foreground">Extra layer of security</p>
-                </div>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-lg bg-foreground/10 flex items-center justify-center">
+                <span className="text-lg font-semibold text-foreground">
+                  {profile?.firstname?.charAt(0) || "U"}{profile?.lastname?.charAt(0) || ""}
+                </span>
               </div>
-              <Button variant="outline" size="sm" className="w-full mt-3" asChild>
-                <Link to="/tickets">
-                  Request Setup
-                </Link>
-              </Button>
+              <div>
+                <h3 className="font-medium">
+                  {profile?.firstname} {profile?.lastname}
+                </h3>
+                <p className="text-sm text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                  <Mail className="h-3.5 w-3.5" />
+                  {profile?.email || "—"}
+                </p>
+                <Badge variant="secondary" className="mt-2 text-xs">Account #{user?.userid}</Badge>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          )}
+          <div className="mt-5 pt-5 border-t border-border">
+            <p className="text-sm text-muted-foreground mb-3">
+              To update your profile details, please contact support.
+            </p>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/tickets">
+                <Headphones className="h-4 w-4 mr-2" />
+                Contact Support
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Security Section */}
+      <div className="rounded-lg border border-border bg-card">
+        <div className="p-5 border-b border-border">
+          <h2 className="font-medium flex items-center gap-2">
+            <Shield className="h-4 w-4 text-muted-foreground" />
+            Security
+          </h2>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-foreground/5 flex items-center justify-center">
+                <Lock className="h-5 w-5 text-foreground/70" />
+              </div>
+              <div>
+                <span className="font-medium text-sm">Password</span>
+                <p className="text-xs text-muted-foreground">Keep your account secure</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/forgot-password">
+                <Key className="h-4 w-4 mr-2" />
+                Change
+              </Link>
+            </Button>
+          </div>
+
+          <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-lg bg-foreground/5 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-foreground/70" />
+              </div>
+              <div>
+                <span className="font-medium text-sm">Two-Factor Auth</span>
+                <p className="text-xs text-muted-foreground">Extra layer of security</p>
+              </div>
+            </div>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/tickets">
+                Request Setup
+              </Link>
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Quick Links Section */}
       <div>
-        <h2 className="text-lg font-semibold mb-4">Quick Links</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <h2 className="font-medium mb-4">Quick Links</h2>
+        <div className="grid gap-3 md:grid-cols-2">
+          <QuickLinkCard
+            icon={Server}
+            title="My Projects"
+            description="Manage your hosting services"
+            href="/hosting"
+          />
           <QuickLinkCard
             icon={CreditCard}
-            title="Invoices"
+            title="Billing"
             description="View and pay your invoices"
             href="/invoices"
           />
           <QuickLinkCard
             icon={Headphones}
-            title="Support Tickets"
-            description="Get help from our support team"
+            title="Support"
+            description="Get help from our team"
             href="/tickets"
           />
           <QuickLinkCard
@@ -197,24 +197,6 @@ export default function Settings() {
             title="Domains"
             description="Manage your domain names"
             href="/domains"
-          />
-          <QuickLinkCard
-            icon={SettingsIcon}
-            title="My Hosting"
-            description="Manage your hosting services"
-            href="/hosting"
-          />
-          <QuickLinkCard
-            icon={Mail}
-            title="Email Support"
-            description="Contact us at support@vintechdev.store"
-            href="/tickets"
-          />
-          <QuickLinkCard
-            icon={Key}
-            title="Reset Password"
-            description="Change your account password"
-            href="/forgot-password"
           />
         </div>
       </div>
