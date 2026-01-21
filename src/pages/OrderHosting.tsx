@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { orderApi } from "@/lib/api";
+import { orderApi, domainsApi, DomainSearchResult } from "@/lib/api";
 import { WHMCS_CONFIG, calculatePrice, formatBillingCyclePrice } from "@/lib/whmcs-config";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,6 +23,8 @@ import {
   Globe,
   PlusCircle,
   Search,
+  X,
+  CheckCircle2,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -42,6 +44,47 @@ export default function OrderHosting() {
   const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Domain availability check state
+  const [isCheckingDomain, setIsCheckingDomain] = useState(false);
+  const [domainResults, setDomainResults] = useState<DomainSearchResult[]>([]);
+  const [selectedDomainResult, setSelectedDomainResult] = useState<DomainSearchResult | null>(null);
+  const [hasCheckedDomain, setHasCheckedDomain] = useState(false);
+
+  const handleCheckDomain = async () => {
+    if (!domain.trim()) return;
+    
+    setIsCheckingDomain(true);
+    setHasCheckedDomain(false);
+    setSelectedDomainResult(null);
+    
+    try {
+      const results = await domainsApi.search(domain.trim());
+      setDomainResults(results.slice(0, 6)); // Show top 6 results
+      setHasCheckedDomain(true);
+      
+      // Auto-select exact match if available
+      const exactMatch = results.find(r => r.domain.toLowerCase() === domain.trim().toLowerCase());
+      if (exactMatch?.available) {
+        setSelectedDomainResult(exactMatch);
+        setDomain(exactMatch.domain);
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to check domain availability",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCheckingDomain(false);
+    }
+  };
+
+  const handleSelectDomain = (result: DomainSearchResult) => {
+    if (!result.available) return;
+    setSelectedDomainResult(result);
+    setDomain(result.domain);
+  };
 
   const handleOrder = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,6 +279,9 @@ export default function OrderHosting() {
               onValueChange={(value) => {
                 setDomainOption(value as "register" | "existing");
                 setDomain("");
+                setHasCheckedDomain(false);
+                setDomainResults([]);
+                setSelectedDomainResult(null);
               }}
               className="grid gap-4 md:grid-cols-2"
             >
@@ -283,17 +329,29 @@ export default function OrderHosting() {
             </RadioGroup>
 
             {/* Domain Input */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Label htmlFor="domain">
-                {domainOption === "register" ? "Domain to Register" : "Your Domain Name"}
+                {domainOption === "register" ? "Search for a Domain" : "Your Domain Name"}
               </Label>
               <div className="flex gap-3">
                 <Input
                   id="domain"
                   type="text"
-                  placeholder={domainOption === "register" ? "mynewsite.com" : "example.com"}
+                  placeholder={domainOption === "register" ? "Enter domain name (e.g., mybusiness)" : "example.com"}
                   value={domain}
-                  onChange={(e) => setDomain(e.target.value)}
+                  onChange={(e) => {
+                    setDomain(e.target.value);
+                    if (domainOption === "register") {
+                      setHasCheckedDomain(false);
+                      setSelectedDomainResult(null);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && domainOption === "register") {
+                      e.preventDefault();
+                      handleCheckDomain();
+                    }
+                  }}
                   className="flex-1"
                   required
                 />
@@ -301,17 +359,85 @@ export default function OrderHosting() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => navigate(`/domains/search?domain=${encodeURIComponent(domain)}`)}
-                    disabled={!domain}
+                    onClick={handleCheckDomain}
+                    disabled={!domain.trim() || isCheckingDomain}
                   >
-                    <Search className="h-4 w-4 mr-2" />
-                    Check
+                    {isCheckingDomain ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Search className="h-4 w-4 mr-2" />
+                        Check
+                      </>
+                    )}
                   </Button>
                 )}
               </div>
+              
+              {/* Domain Availability Results */}
+              {domainOption === "register" && hasCheckedDomain && (
+                <div className="space-y-3">
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {domainResults.map((result) => (
+                      <div
+                        key={result.domain}
+                        onClick={() => handleSelectDomain(result)}
+                        className={`flex items-center justify-between p-3 rounded-lg border-2 transition-all ${
+                          result.available
+                            ? selectedDomainResult?.domain === result.domain
+                              ? "border-primary bg-primary/5 cursor-pointer"
+                              : "border-muted hover:border-primary/50 cursor-pointer"
+                            : "border-muted bg-muted/30 opacity-60 cursor-not-allowed"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          {result.available ? (
+                            selectedDomainResult?.domain === result.domain ? (
+                              <CheckCircle2 className="h-4 w-4 text-primary" />
+                            ) : (
+                              <Check className="h-4 w-4 text-primary" />
+                            )
+                          ) : (
+                            <X className="h-4 w-4 text-destructive" />
+                          )}
+                          <span className="font-medium text-sm">{result.domain}</span>
+                        </div>
+                        <div className="text-right">
+                          {result.available ? (
+                            <Badge variant="secondary" className="text-xs">
+                              ${result.price}/yr
+                            </Badge>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Taken</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {selectedDomainResult && (
+                    <Alert className="border-primary/50 bg-primary/5">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <AlertDescription>
+                        <span className="font-medium">{selectedDomainResult.domain}</span> is available and will be registered with your hosting order for ${selectedDomainResult.price}/year.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {!domainResults.some(r => r.available) && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>
+                        No available domains found. Try a different name.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+              
               <p className="text-sm text-muted-foreground">
                 {domainOption === "register" 
-                  ? "Enter the domain you want to register. We'll check availability."
+                  ? "Search for an available domain. Select one from the results to continue."
                   : "Enter your existing domain. You'll update DNS after setup."
                 }
               </p>
