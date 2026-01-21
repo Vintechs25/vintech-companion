@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, Clock, CreditCard, Globe, Server } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { formatPrice, WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 interface OrderDetails {
   orderId: number;
@@ -71,11 +72,7 @@ export function OrderConfirmationDialog({
 
   if (!orderDetails) return null;
 
-  const billingCycleLabel = {
-    monthly: "Monthly",
-    quarterly: "Quarterly",
-    annually: "Annually",
-  }[orderDetails.billingCycle] || orderDetails.billingCycle;
+  const billingCycleLabel = WHMCS_CONFIG.billingCycles[orderDetails.billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.label || orderDetails.billingCycle;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -99,9 +96,9 @@ export function OrderConfirmationDialog({
               </div>
               <div className="flex-1">
                 <p className="font-medium">{orderDetails.planName}</p>
-                <p className="text-sm text-muted-foreground">{billingCycleLabel} billing</p>
+                <p className="text-sm text-muted-foreground">{billingCycleLabel}</p>
               </div>
-              <p className="font-semibold">${orderDetails.hostingPrice.toFixed(2)}</p>
+              <p className="font-semibold">{formatPrice(orderDetails.hostingPrice)}</p>
             </div>
 
             {orderDetails.includesDomainRegistration && (
@@ -133,7 +130,12 @@ export function OrderConfirmationDialog({
 
             <div className="flex items-center justify-between font-semibold">
               <span>Total Due</span>
-              <span className="text-lg text-primary">${orderDetails.totalPrice.toFixed(2)}</span>
+              <span className="text-lg text-primary">
+                {formatPrice(orderDetails.totalPrice)}
+                {orderDetails.domainPrice > 0 && (
+                  <span className="text-sm font-normal text-muted-foreground"> + ${orderDetails.domainPrice.toFixed(2)}</span>
+                )}
+              </span>
             </div>
           </div>
 
