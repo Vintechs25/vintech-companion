@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ticketsApi, type TicketDetail as TicketDetailType } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -41,7 +40,6 @@ export default function TicketDetail() {
       await ticketsApi.reply(parseInt(id), reply);
       toast({ title: "Reply Sent", description: "Your reply has been submitted." });
       setReply("");
-      // Refresh ticket data
       const data = await ticketsApi.getOne(parseInt(id));
       setTicket(data);
     } catch (err) {
@@ -51,11 +49,23 @@ export default function TicketDetail() {
     }
   };
 
+  const getStatusVariant = (status: string) => {
+    const s = status.toLowerCase();
+    if (s === "open" || s === "customer-reply") return "warning";
+    if (s === "answered") return "default";
+    if (s === "closed") return "secondary";
+    return "outline";
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-64 w-full" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-9 w-9 rounded-md" />
+          <Skeleton className="h-7 w-48" />
+        </div>
+        <Skeleton className="h-32 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </div>
     );
   }
@@ -63,7 +73,7 @@ export default function TicketDetail() {
   if (error || !ticket) {
     return (
       <div className="space-y-6">
-        <Button variant="ghost" onClick={() => navigate("/tickets")}>
+        <Button variant="ghost" size="sm" onClick={() => navigate("/tickets")}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Tickets
         </Button>
@@ -75,49 +85,54 @@ export default function TicketDetail() {
     );
   }
 
-  const getStatusColor = (status: string) => {
-    const s = status.toLowerCase();
-    if (s === "open") return "bg-yellow-500/20 text-yellow-600";
-    if (s === "answered") return "bg-primary/20 text-primary";
-    if (s === "closed") return "bg-muted text-muted-foreground";
-    return "";
-  };
-
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/tickets")}>
+        <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => navigate("/tickets")}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold">Ticket #{ticket.id}</h1>
-          <p className="text-muted-foreground">{ticket.subject}</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-semibold tracking-tight">Ticket #{ticket.id}</h1>
+            <Badge variant={getStatusVariant(ticket.status) as any}>{ticket.status}</Badge>
+          </div>
+          <p className="text-sm text-muted-foreground truncate">{ticket.subject}</p>
         </div>
-        <Badge className={getStatusColor(ticket.status)}>{ticket.status}</Badge>
       </div>
 
       {/* Ticket Info */}
-      <Card>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <span>Department: {ticket.department || "General"}</span>
-            <span>Opened: {ticket.date || "N/A"}</span>
+      <div className="rounded-lg border border-border bg-card p-4">
+        <div className="flex items-center gap-6 text-sm">
+          <div>
+            <span className="text-muted-foreground">Department:</span>
+            <span className="ml-2 font-medium">{ticket.department || "General"}</span>
           </div>
-        </CardHeader>
-      </Card>
+          <div>
+            <span className="text-muted-foreground">Opened:</span>
+            <span className="ml-2 font-medium">{ticket.date || "—"}</span>
+          </div>
+        </div>
+      </div>
 
       {/* Messages */}
       <div className="space-y-4">
-        <h2 className="text-lg font-semibold">Conversation</h2>
+        <h2 className="text-sm font-medium text-muted-foreground">Conversation</h2>
         
         {ticket.replies && ticket.replies.length > 0 ? (
-          ticket.replies.map((msg) => (
-            <Card key={msg.id} className={msg.admin ? "border-primary/30 bg-primary/5" : ""}>
-              <CardContent className="pt-4">
+          <div className="space-y-3">
+            {ticket.replies.map((msg) => (
+              <div 
+                key={msg.id} 
+                className={`rounded-lg border p-4 ${
+                  msg.admin 
+                    ? "border-primary/20 bg-primary/5" 
+                    : "border-border bg-card"
+                }`}
+              >
                 <div className="flex items-start gap-3">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
-                    msg.admin ? "bg-primary/20" : "bg-muted"
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 ${
+                    msg.admin ? "bg-primary/10" : "bg-muted"
                   }`}>
                     {msg.admin ? (
                       <Headphones className="h-4 w-4 text-primary" />
@@ -125,62 +140,57 @@ export default function TicketDetail() {
                       <User className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <span className="text-sm font-medium">
                         {msg.admin ? (msg.name || "Support Team") : "You"}
                       </span>
-                      <span className="text-sm text-muted-foreground">{msg.date}</span>
+                      <span className="text-xs text-muted-foreground">{msg.date}</span>
                     </div>
-                    <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                    <p className="text-sm whitespace-pre-wrap text-foreground/90">{msg.message}</p>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))
+              </div>
+            ))}
+          </div>
         ) : (
-          <Card>
-            <CardContent className="py-8 text-center text-muted-foreground">
-              No messages yet
-            </CardContent>
-          </Card>
+          <div className="rounded-lg border border-dashed border-border bg-card/50 p-8 text-center">
+            <p className="text-sm text-muted-foreground">No messages yet</p>
+          </div>
         )}
       </div>
 
       {/* Reply Form */}
       {ticket.status.toLowerCase() !== "closed" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Reply</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Textarea
-              placeholder="Type your reply..."
-              value={reply}
-              onChange={(e) => setReply(e.target.value)}
-              rows={4}
-            />
-            <div className="flex justify-end">
-              <Button
-                onClick={handleReply}
-                disabled={submitting || !reply.trim()}
-                className="gradient-primary"
-              >
-                {submitting ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    Send Reply
-                  </>
-                )}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-border bg-card p-4 space-y-4">
+          <h3 className="text-sm font-medium">Reply</h3>
+          <Textarea
+            placeholder="Type your reply..."
+            value={reply}
+            onChange={(e) => setReply(e.target.value)}
+            rows={4}
+            className="resize-none"
+          />
+          <div className="flex justify-end">
+            <Button
+              onClick={handleReply}
+              disabled={submitting || !reply.trim()}
+              size="sm"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Send Reply
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );

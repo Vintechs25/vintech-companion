@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ticketsApi, type Ticket } from "@/lib/api";
 import { WHMCS_CONFIG } from "@/lib/whmcs-config";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -53,7 +52,6 @@ export default function Tickets() {
     if (!user?.userid || !subject || !message) return;
     setSubmitting(true);
     try {
-      // Pass department key - API will map to numeric ID
       const response = await ticketsApi.open(user.userid, subject, message, department, priority);
       
       if (response.result === "success") {
@@ -94,18 +92,19 @@ export default function Tickets() {
   if (isLoading) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Support Tickets</h1>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Support</h1>
+          <p className="text-sm text-muted-foreground">Loading tickets...</p>
+        </div>
         <div className="grid gap-4 md:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <Skeleton className="h-4 w-24 mb-2" />
-                <Skeleton className="h-8 w-16" />
-              </CardContent>
-            </Card>
+            <div key={i} className="rounded-lg border border-border bg-card p-5">
+              <Skeleton className="h-4 w-20 mb-2" />
+              <Skeleton className="h-7 w-12" />
+            </div>
           ))}
         </div>
-        <Skeleton className="h-48 w-full" />
+        <Skeleton className="h-48 w-full rounded-lg" />
       </div>
     );
   }
@@ -113,7 +112,10 @@ export default function Tickets() {
   if (error) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Support Tickets</h1>
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Support</h1>
+          <p className="text-sm text-muted-foreground">Get help from our team</p>
+        </div>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
@@ -126,12 +128,12 @@ export default function Tickets() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Support Tickets</h1>
-          <p className="text-muted-foreground">Get help from our support team</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Support</h1>
+          <p className="text-sm text-muted-foreground">Get help from our team</p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="gradient-primary shadow-lg shadow-primary/25">
+            <Button size="sm">
               <Plus className="h-4 w-4 mr-2" />
               New Ticket
             </Button>
@@ -146,9 +148,9 @@ export default function Tickets() {
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>Department</Label>
+                  <Label className="text-sm">Department</Label>
                   <Select value={department} onValueChange={setDepartment}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -161,9 +163,9 @@ export default function Tickets() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>Priority</Label>
+                  <Label className="text-sm">Priority</Label>
                   <Select value={priority} onValueChange={setPriority}>
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -177,20 +179,21 @@ export default function Tickets() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Subject</Label>
+                <Label className="text-sm">Subject</Label>
                 <Input
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="Brief description of your issue"
+                  className="h-9"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Message</Label>
+                <Label className="text-sm">Message</Label>
                 <Textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Please provide as much detail as possible..."
-                  rows={6}
+                  rows={5}
                 />
               </div>
             </div>
@@ -201,7 +204,6 @@ export default function Tickets() {
               <Button
                 onClick={handleSubmit}
                 disabled={submitting || !subject || !message}
-                className="gradient-primary"
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 Submit Ticket
@@ -213,45 +215,39 @@ export default function Tickets() {
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Open Tickets</p>
-                <p className="text-3xl font-bold text-yellow-600">{openTickets.length}</p>
-              </div>
-              <div className="h-14 w-14 rounded-2xl bg-yellow-500/10 flex items-center justify-center">
-                <Clock className="h-7 w-7 text-yellow-600" />
-              </div>
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Open Tickets</p>
+              <p className="text-2xl font-semibold text-foreground mt-1">{openTickets.length}</p>
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Answered</p>
-                <p className="text-3xl font-bold text-blue-600">{answeredTickets.length}</p>
-              </div>
-              <div className="h-14 w-14 rounded-2xl bg-blue-500/10 flex items-center justify-center">
-                <MessageSquare className="h-7 w-7 text-blue-600" />
-              </div>
+            <div className="h-10 w-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-amber-600" />
             </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Tickets</p>
-                <p className="text-3xl font-bold">{tickets.length}</p>
-              </div>
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Headphones className="h-7 w-7 text-primary" />
-              </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Answered</p>
+              <p className="text-2xl font-semibold text-foreground mt-1">{answeredTickets.length}</p>
             </div>
-          </CardContent>
-        </Card>
+            <div className="h-10 w-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <MessageSquare className="h-5 w-5 text-blue-600" />
+            </div>
+          </div>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Tickets</p>
+              <p className="text-2xl font-semibold text-foreground mt-1">{tickets.length}</p>
+            </div>
+            <div className="h-10 w-10 rounded-lg bg-foreground/5 flex items-center justify-center">
+              <Headphones className="h-5 w-5 text-foreground/70" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -259,14 +255,14 @@ export default function Tickets() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by subject or ticket number..."
+            placeholder="Search tickets..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-9"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger className="w-full sm:w-[140px] h-9">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -281,88 +277,82 @@ export default function Tickets() {
 
       {/* Tickets Table */}
       {tickets.length === 0 ? (
-        <Card className="border-border/50">
-          <CardContent>
-            <EmptyState
-              icon={MessageSquare}
-              title="No support tickets"
-              description="Need help? Open a support ticket and our team will assist you"
-              action={{ label: "Open Ticket", onClick: () => setDialogOpen(true), variant: "primary" }}
-            />
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-dashed border-border bg-card/50 p-12">
+          <EmptyState
+            icon={MessageSquare}
+            title="No support tickets"
+            description="Need help? Open a support ticket and our team will assist you"
+            action={{ label: "Open Ticket", onClick: () => setDialogOpen(true), variant: "primary" }}
+          />
+        </div>
       ) : filteredTickets.length === 0 ? (
-        <Card className="border-border/50">
-          <CardContent className="py-12 text-center">
-            <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">No tickets match your search</p>
-            <Button variant="link" onClick={() => { setSearchQuery(""); setStatusFilter("all"); }}>
-              Clear filters
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-border bg-card p-12 text-center">
+          <Search className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+          <p className="text-muted-foreground text-sm">No tickets match your search</p>
+          <Button variant="link" size="sm" onClick={() => { setSearchQuery(""); setStatusFilter("all"); }}>
+            Clear filters
+          </Button>
+        </div>
       ) : (
-        <Card className="border-border/50">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ticket</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Last Reply</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTickets.map((ticket) => (
-                  <TableRow
-                    key={ticket.id}
-                    className="cursor-pointer group"
-                    onClick={() => navigate(`/tickets/${ticket.id}`)}
-                  >
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-primary/20">
-                          <MessageSquare className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <span className="font-medium">#{ticket.id}</span>
+        <div className="rounded-lg border border-border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="font-medium">Ticket</TableHead>
+                <TableHead className="font-medium">Subject</TableHead>
+                <TableHead className="font-medium">Priority</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+                <TableHead className="font-medium">Last Reply</TableHead>
+                <TableHead className="text-right font-medium">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredTickets.map((ticket) => (
+                <TableRow
+                  key={ticket.id}
+                  className="cursor-pointer group"
+                  onClick={() => navigate(`/tickets/${ticket.id}`)}
+                >
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-foreground/5 flex items-center justify-center">
+                        <MessageSquare className="h-4 w-4 text-foreground/70" />
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-medium group-hover:text-primary transition-colors">
-                        {ticket.subject}
-                      </span>
-                      {ticket.department && (
-                        <p className="text-sm text-muted-foreground capitalize">{ticket.department}</p>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {ticket.priority ? (
-                        <PriorityBadge priority={ticket.priority} />
-                      ) : (
-                        <span className="text-muted-foreground">-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={ticket.status} />
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-muted-foreground">{ticket.lastreply || ticket.date || "N/A"}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="ghost" size="sm" className="group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                        View
-                        <ArrowRight className="h-4 w-4 ml-1" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                      <span className="font-medium text-sm">#{ticket.id}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium text-sm group-hover:text-primary transition-colors">
+                      {ticket.subject}
+                    </span>
+                    {ticket.department && (
+                      <p className="text-xs text-muted-foreground capitalize">{ticket.department}</p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {ticket.priority ? (
+                      <PriorityBadge priority={ticket.priority} />
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={ticket.status} size="sm" />
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">{ticket.lastreply || ticket.date || "—"}</span>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" className="h-8">
+                      View
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

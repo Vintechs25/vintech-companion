@@ -28,8 +28,7 @@ import {
   Search,
   Settings,
   Globe,
-  HardDrive,
-  Zap,
+  ArrowRight,
 } from "lucide-react";
 
 export default function MyHosting() {
@@ -86,19 +85,17 @@ export default function MyHosting() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">My Hosting</h1>
-            <p className="text-muted-foreground">Loading your services...</p>
+            <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
+            <p className="text-sm text-muted-foreground">Loading your services...</p>
           </div>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <Skeleton className="h-6 w-3/4 mb-2" />
-                <Skeleton className="h-4 w-1/2 mb-4" />
-                <Skeleton className="h-8 w-full" />
-              </CardContent>
-            </Card>
+            <div key={i} className="rounded-lg border border-border bg-card p-6">
+              <Skeleton className="h-5 w-3/4 mb-3" />
+              <Skeleton className="h-4 w-1/2 mb-4" />
+              <Skeleton className="h-9 w-full" />
+            </div>
           ))}
         </div>
       </div>
@@ -109,14 +106,14 @@ export default function MyHosting() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">My Hosting</h1>
-          <p className="text-muted-foreground">Manage your hosting accounts</p>
+          <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
+          <p className="text-sm text-muted-foreground">Manage your hosting accounts</p>
         </div>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>
-        <Button onClick={() => window.location.reload()}>Retry</Button>
+        <Button onClick={() => window.location.reload()} variant="outline">Retry</Button>
       </div>
     );
   }
@@ -126,16 +123,16 @@ export default function MyHosting() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">My Hosting</h1>
-          <p className="text-muted-foreground">
-            {services.length} service{services.length !== 1 ? "s" : ""} total
+          <h1 className="text-2xl font-semibold tracking-tight">Projects</h1>
+          <p className="text-sm text-muted-foreground">
+            {services.length} project{services.length !== 1 ? "s" : ""}
             {filteredServices.length !== services.length && ` · ${filteredServices.length} shown`}
           </p>
         </div>
-        <Button asChild className="gradient-primary hover:opacity-90 shadow-lg shadow-primary/25">
+        <Button asChild size="sm">
           <Link to="/order">
             <Plus className="h-4 w-4 mr-2" />
-            New Hosting
+            New Project
           </Link>
         </Button>
       </div>
@@ -145,14 +142,14 @@ export default function MyHosting() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by domain, IP, username, or product..."
+            placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 h-9"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[160px]">
+          <SelectTrigger className="w-full sm:w-[140px] h-9">
             <SelectValue placeholder="All Status" />
           </SelectTrigger>
           <SelectContent>
@@ -168,160 +165,141 @@ export default function MyHosting() {
 
       {/* Services */}
       {services.length === 0 ? (
-        <Card className="border-border/50">
-          <CardContent>
-            <EmptyState
-              icon={Server}
-              title="No hosting services"
-              description="Get started by ordering your first hosting plan"
-              action={{ label: "Order Hosting", href: "/order", variant: "primary" }}
-            />
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-dashed border-border bg-card/50 p-12">
+          <EmptyState
+            icon={Server}
+            title="No projects yet"
+            description="Get started by creating your first hosting project"
+            action={{ label: "Create Project", href: "/order", variant: "primary" }}
+          />
+        </div>
       ) : filteredServices.length === 0 ? (
-        <Card className="border-border/50">
-          <CardContent className="py-12 text-center">
-            <Search className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-            <p className="text-muted-foreground">No services match your search</p>
-            <Button
-              variant="link"
-              onClick={() => {
-                setSearchQuery("");
-                setStatusFilter("all");
-              }}
-            >
-              Clear filters
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="rounded-lg border border-border bg-card p-12 text-center">
+          <Search className="h-10 w-10 mx-auto mb-3 text-muted-foreground/50" />
+          <p className="text-muted-foreground text-sm">No projects match your search</p>
+          <Button
+            variant="link"
+            size="sm"
+            onClick={() => {
+              setSearchQuery("");
+              setStatusFilter("all");
+            }}
+          >
+            Clear filters
+          </Button>
+        </div>
       ) : view === "grid" ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredServices.map((service, index) => (
-            <Card 
+          {filteredServices.map((service) => (
+            <Link 
               key={service.id} 
-              className="hover:shadow-xl transition-all duration-300 hover:border-primary/30 group hover:-translate-y-1 border-border/50 animate-fade-in-up"
-              style={{ animationDelay: `${index * 0.05}s` }}
+              to={`/hosting/${service.id}`}
+              className="group"
             >
-              <CardContent className="p-5">
+              <div className="rounded-lg border border-border bg-card p-5 transition-all duration-200 hover:border-foreground/20 hover:shadow-sm">
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-12 w-12 rounded-2xl gradient-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform">
-                      <Server className="h-6 w-6 text-primary-foreground" />
+                    <div className="h-10 w-10 rounded-lg bg-foreground/5 flex items-center justify-center shrink-0">
+                      <Server className="h-5 w-5 text-foreground/70" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-semibold truncate group-hover:text-primary transition-colors">
+                      <h3 className="font-medium truncate text-sm">
                         {service.domain}
                       </h3>
                       {service.product && (
-                        <p className="text-sm text-muted-foreground truncate">{service.product}</p>
+                        <p className="text-xs text-muted-foreground truncate">{service.product}</p>
                       )}
                     </div>
                   </div>
-                  <StatusBadge status={service.status} />
+                  <StatusBadge status={service.status} size="sm" />
                 </div>
 
                 {/* Details */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between text-sm">
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center justify-between">
                     <span className="text-muted-foreground flex items-center gap-1.5">
-                      <Globe className="h-3.5 w-3.5" /> IP Address
+                      <Globe className="h-3.5 w-3.5" /> IP
                     </span>
                     <div className="flex items-center gap-1">
-                      <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">{service.ip || "N/A"}</code>
-                      {service.ip && <CopyButton text={service.ip} className="h-6 w-6" />}
+                      <code className="text-xs font-mono text-foreground/80">{service.ip || "—"}</code>
+                      {service.ip && <CopyButton text={service.ip} className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground flex items-center gap-1.5">
-                      <HardDrive className="h-3.5 w-3.5" /> Username
-                    </span>
-                    <code className="bg-muted px-2 py-0.5 rounded text-xs font-mono">{service.username || "N/A"}</code>
-                  </div>
                   {service.nextduedate && (
-                    <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Renewal</span>
                       <CountdownBadge date={service.nextduedate} />
                     </div>
                   )}
                 </div>
 
-                {/* Actions */}
-                <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" asChild>
-                  <Link to={`/hosting/${service.id}`}>
-                    <Settings className="h-4 w-4 mr-2" />
-                    Manage Service
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
+                {/* Footer */}
+                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">Click to manage</span>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                </div>
+              </div>
+            </Link>
           ))}
         </div>
       ) : (
-        <Card className="border-border/50">
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Domain</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Username</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Renewal</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+        <div className="rounded-lg border border-border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                <TableHead className="font-medium">Project</TableHead>
+                <TableHead className="font-medium">IP Address</TableHead>
+                <TableHead className="font-medium">Status</TableHead>
+                <TableHead className="font-medium">Renewal</TableHead>
+                <TableHead className="text-right font-medium">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredServices.map((service) => (
+                <TableRow key={service.id} className="group">
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-md bg-foreground/5 flex items-center justify-center">
+                        <Server className="h-4 w-4 text-foreground/70" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">{service.domain}</p>
+                        {service.product && (
+                          <p className="text-xs text-muted-foreground">{service.product}</p>
+                        )}
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <code className="text-xs font-mono">{service.ip || "—"}</code>
+                      {service.ip && <CopyButton text={service.ip} className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={service.status} size="sm" />
+                  </TableCell>
+                  <TableCell>
+                    {service.nextduedate ? (
+                      <CountdownBadge date={service.nextduedate} />
+                    ) : (
+                      <span className="text-muted-foreground text-sm">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" asChild>
+                      <Link to={`/hosting/${service.id}`}>
+                        <Settings className="h-4 w-4 mr-1" />
+                        Manage
+                      </Link>
+                    </Button>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredServices.map((service) => (
-                  <TableRow key={service.id} className="group">
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl gradient-primary flex items-center justify-center shadow-md shadow-primary/20">
-                          <Server className="h-5 w-5 text-primary-foreground" />
-                        </div>
-                        <div>
-                          <p className="font-medium group-hover:text-primary transition-colors">
-                            {service.domain}
-                          </p>
-                          {service.product && (
-                            <p className="text-sm text-muted-foreground">{service.product}</p>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <code className="text-sm bg-muted px-2 py-1 rounded font-mono">{service.ip || "N/A"}</code>
-                        {service.ip && <CopyButton text={service.ip} className="h-6 w-6" />}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <code className="text-sm font-mono">{service.username || "N/A"}</code>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={service.status} />
-                    </TableCell>
-                    <TableCell>
-                      {service.nextduedate ? (
-                        <CountdownBadge date={service.nextduedate} />
-                      ) : (
-                        <span className="text-muted-foreground">N/A</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button variant="outline" size="sm" asChild>
-                        <Link to={`/hosting/${service.id}`}>
-                          <Settings className="h-4 w-4 mr-1" />
-                          Manage
-                        </Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );
