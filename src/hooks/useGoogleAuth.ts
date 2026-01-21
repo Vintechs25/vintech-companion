@@ -1,54 +1,82 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
-const WHMCS_GOOGLE_LOGIN_URL = "https://billing.vintechdev.store/login.php?oauth=google";
+const WHMCS_API_URL = "https://vintechdev.store/api/whmcs.php";
 
 export function useGoogleAuth() {
   const [isLoading, setIsLoading] = useState(false);
-  const [popup, setPopup] = useState<Window | null>(null);
+  const popupRef = useRef<Window | null>(null);
 
-  const initiateGoogleLogin = useCallback((): Promise<{ success: boolean }> => {
+  const initiateGoogleLogin = useCallback(async () => {
     setIsLoading(true);
 
-    const width = 500;
-    const height = 600;
-    const left = (window.screen.width - width) / 2;
-    const top = (window.screen.height - height) / 2;
+    try {
+      // Get the Google OAuth URL from WHMCS
+      const response = await fetch(WHMCS_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          action: "GetGoogleAuthUrl",
+          redirect_uri: window.location.origin + "/auth/google/callback",
+        }),
+      });
 
-    const authPopup = window.open(
-      WHMCS_GOOGLE_LOGIN_URL,
-      "googleLogin",
-      `width=${width},height=${height},top=${top},left=${left}`
-    );
+      const data = await response.json();
 
-    if (!authPopup) {
+      if (data.result === "success" && data.auth_url) {
+        // Open the Google OAuth URL in a popup - this shows Google's native login
+        const width = 500;
+        const height = 600;
+        const left = (window.screen.width - width) / 2;
+        const top = (window.screen.height - height) / 2;
+
+        popupRef.current = window.open(
+          data.auth_url,
+          "googleLogin",
+          `width=${width},height=${height},top=${top},left=${left},scrollbars=yes`
+        );
+      } else {
+        console.error("Failed to get Google auth URL:", data.message);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Error initiating Google login:", error);
       setIsLoading(false);
-      return Promise.resolve({ success: false });
     }
+  }, []);
 
-    setPopup(authPopup);
+  // Listen for messages from the callback popup
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
 
-    return new Promise((resolve) => {
-      const timer = setInterval(() => {
-        if (authPopup.closed) {
-          clearInterval(timer);
-          setIsLoading(false);
-          setPopup(null);
-          // User is now logged in on WHMCS - refresh to sync state
+      if (event.data?.type === "google-auth-callback") {
+        setIsLoading(false);
+
+        if (event.data.success && event.data.userid) {
+          // Store user session
+          localStorage.setItem("whmcs_user_id", event.data.userid);
+          if (event.data.email) {
+            localStorage.setItem("whmcs_user_email", event.data.email);
+          }
           window.location.reload();
-          resolve({ success: true });
         }
-      }, 500);
-    });
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, []);
 
   // Cleanup popup on unmount
   useEffect(() => {
     return () => {
-      if (popup && !popup.closed) {
-        popup.close();
+      if (popupRef.current && !popupRef.current.closed) {
+        popupRef.current.close();
       }
     };
-  }, [popup]);
+  }, []);
 
   return {
     initiateGoogleLogin,
