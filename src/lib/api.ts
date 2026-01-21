@@ -1,6 +1,37 @@
 // Vintech Hosting API Client
 // Requests are sent to the PHP bridge which injects WHMCS credentials server-side.
 const WHMCS_API_URL = "https://vintechdev.store/api/whmcs.php";
+const WHMCS_BILLING_URL = "https://billing.vintechdev.store";
+
+// ============= WHMCS Configuration Constants =============
+// These IDs must match your WHMCS setup
+
+// Product IDs from WHMCS Products/Services
+export const WHMCS_PRODUCTS = {
+  basic: { pid: 1, name: "Basic", price: 4.99 },
+  pro: { pid: 2, name: "Professional", price: 9.99 },
+  enterprise: { pid: 3, name: "Enterprise", price: 24.99 },
+} as const;
+
+// Department IDs from WHMCS Support Departments
+export const WHMCS_DEPARTMENTS = {
+  sales: { id: 1, name: "Sales" },
+  technical: { id: 2, name: "Technical Support" },
+  billing: { id: 3, name: "Billing" },
+} as const;
+
+// Billing cycles supported
+export const BILLING_CYCLES = {
+  monthly: { value: "monthly", label: "Monthly", discount: 0 },
+  quarterly: { value: "quarterly", label: "Quarterly", discount: 5 },
+  semiannually: { value: "semiannually", label: "Semi-Annually", discount: 10 },
+  annually: { value: "annually", label: "Annually", discount: 15 },
+} as const;
+
+// Priority values for tickets
+export const TICKET_PRIORITIES = ["Low", "Medium", "High", "Urgent"] as const;
+
+// ============= Interfaces =============
 
 interface ApiResponse<T = unknown> {
   result?: string;
@@ -8,6 +39,8 @@ interface ApiResponse<T = unknown> {
   message?: string;
   data?: T;
   pay_url?: string;
+  invoiceid?: number;
+  orderid?: number;
 }
 
 interface LoginResponse {
@@ -85,8 +118,9 @@ interface TicketDetail extends Ticket {
 
 interface OrderPayload {
   userid: number;
-  product: string;
+  pid: number;
   domain: string;
+  billingcycle: string;
   paymentmethod: string;
 }
 
@@ -95,8 +129,6 @@ async function whmcsRequest<T>(
   action: string,
   params?: Record<string, unknown>
 ): Promise<T> {
-  // Send as form-encoded to keep requests "simple" (no CORS preflight) and
-  // compatible with PHP's default $_POST parsing.
   const body = new URLSearchParams();
   body.append("action", action);
   body.append("responsetype", "json");
@@ -123,7 +155,17 @@ async function whmcsRequest<T>(
   return response.json();
 }
 
-// Auth endpoints
+// Helper to generate payment URL
+function getPaymentUrl(invoiceId: number): string {
+  return `${WHMCS_BILLING_URL}/viewinvoice.php?id=${invoiceId}`;
+}
+
+// Helper to generate view invoice URL
+function getInvoiceUrl(invoiceId: number): string {
+  return `${WHMCS_BILLING_URL}/viewinvoice.php?id=${invoiceId}`;
+}
+
+// ============= Auth API =============
 export const authApi = {
   login: async (email: string, password: string): Promise<LoginResponse> => {
     return whmcsRequest<LoginResponse>("ValidateLogin", {
@@ -177,7 +219,7 @@ export const authApi = {
   },
 };
 
-// Dashboard endpoint - combines multiple WHMCS calls
+// ============= Dashboard API =============
 export const dashboardApi = {
   get: async (userid: number): Promise<DashboardData> => {
     const [clientDetails, products, domains, invoices, tickets] = await Promise.all([
@@ -202,7 +244,7 @@ export const dashboardApi = {
   },
 };
 
-// Services endpoints
+// ============= Services API =============
 export const servicesApi = {
   getAll: async (userid: number): Promise<Service[]> => {
     const response = await whmcsRequest<{ products?: { product: Service[] } }>("GetClientsProducts", { clientid: userid });
@@ -214,40 +256,105 @@ export const servicesApi = {
     return response.products?.product?.[0] || {} as Service;
   },
 
+  // Specific module actions for WHMCS
+  changePassword: async (serviceId: number, newPassword: string): Promise<ApiResponse> => {
+    return whmcsRequest<ApiResponse>("ModuleChangePassword", {
+      serviceid: serviceId,
+      servicepassword: newPassword,
+    });
+  },
+
+  suspend: async (serviceId: number, reason?: string): Promise<ApiResponse> => {
+    return whmcsRequest<ApiResponse>("ModuleSuspend", {
+      serviceid: serviceId,
+      suspendreason: reason || "Requested by user",
+    });
+  },
+
+  unsuspend: async (serviceId: number): Promise<ApiResponse> => {
+    return whmcsRequest<ApiResponse>("ModuleUnsuspend", {
+      serviceid: serviceId,
+    });
+  },
+
+  // Generic module command for custom actions
+  moduleCommand: async (serviceId: number, command: string): Promise<ApiResponse> => {
+    return whmcsRequest<ApiResponse>("ModuleCustom", {
+      serviceid: serviceId,
+      func_name: command,
+    });
+  },
+
+  // Legacy action method - maps to specific actions
   action: async (
     serviceId: number,
     action: string,
     data?: Record<string, unknown>
   ): Promise<ApiResponse> => {
-    return whmcsRequest<ApiResponse>("ModuleCustom", {
-      serviceid: serviceId,
-      func_name: action,
-      ...data,
-    });
+    switch (action.toLowerCase()) {
+      case "changepassword":
+        return servicesApi.changePassword(serviceId, data?.password as string || "");
+      case "suspend":
+        return servicesApi.suspend(serviceId, data?.reason as string);
+      case "unsuspend":
+        return servicesApi.unsuspend(serviceId);
+      case "reboot":
+      case "installwp":
+      default:
+        return servicesApi.moduleCommand(serviceId, action);
+    }
   },
 };
 
-// Order endpoint
+// ============= Order API =============
 export const orderApi = {
   create: async (payload: OrderPayload): Promise<ApiResponse> => {
-    return whmcsRequest<ApiResponse>("AddOrder", {
+    const response = await whmcsRequest<ApiResponse>("AddOrder", {
       clientid: payload.userid,
-      pid: payload.product,
+      pid: payload.pid,
       domain: payload.domain,
+      billingcycle: payload.billingcycle,
       paymentmethod: payload.paymentmethod,
     });
+
+    // Add payment URL if invoice was created
+    if (response.result === "success" && response.invoiceid) {
+      response.pay_url = getPaymentUrl(response.invoiceid);
+    }
+
+    return response;
   },
 };
 
-// Invoices endpoint
+// ============= Invoices API =============
 export const invoicesApi = {
   getAll: async (userid: number): Promise<Invoice[]> => {
     const response = await whmcsRequest<{ invoices?: { invoice: Invoice[] } }>("GetInvoices", { userid });
-    return response.invoices?.invoice || [];
+    const invoices = response.invoices?.invoice || [];
+    
+    // Add payment URLs for unpaid invoices
+    return invoices.map(invoice => ({
+      ...invoice,
+      pay_url: invoice.status.toLowerCase() === "unpaid" 
+        ? getPaymentUrl(invoice.id) 
+        : invoice.pay_url || "",
+    }));
+  },
+
+  getOne: async (invoiceId: number): Promise<Invoice> => {
+    const response = await whmcsRequest<Invoice>("GetInvoice", { invoiceid: invoiceId });
+    return {
+      ...response,
+      pay_url: response.status?.toLowerCase() === "unpaid" ? getPaymentUrl(invoiceId) : "",
+    };
+  },
+
+  downloadPdf: (invoiceId: number): string => {
+    return `${WHMCS_BILLING_URL}/dl.php?type=i&id=${invoiceId}`;
   },
 };
 
-// Domain search result interface
+// ============= Domain Interfaces =============
 interface DomainSearchResult {
   domain: string;
   available: boolean;
@@ -277,7 +384,7 @@ interface DomainOrderResponse extends ApiResponse {
   pay_url?: string;
 }
 
-// Domains endpoint
+// ============= Domains API =============
 export const domainsApi = {
   getAll: async (userid: number): Promise<Domain[]> => {
     const response = await whmcsRequest<{ domains?: { domain: Domain[] } }>("GetClientsDomains", { clientid: userid });
@@ -290,28 +397,69 @@ export const domainsApi = {
   },
 
   register: async (payload: DomainRegistrationPayload): Promise<DomainOrderResponse> => {
-    return whmcsRequest<DomainOrderResponse>("AddOrder", {
+    const response = await whmcsRequest<DomainOrderResponse>("AddOrder", {
       clientid: payload.userid,
       domain: payload.domain,
       domaintype: "register",
       regperiod: payload.years,
-      idprotection: payload.privacy,
+      idprotection: payload.privacy ? 1 : 0,
       paymentmethod: payload.paymentmethod,
-      ...payload.registrant,
+      // Registrant contact info - using proper WHMCS field names
+      contactid: "new",
+      firstname: payload.registrant.firstname,
+      lastname: payload.registrant.lastname,
+      email: payload.registrant.email,
+      phonenumber: payload.registrant.phone,
+      address1: payload.registrant.address,
+      city: payload.registrant.city,
+      state: payload.registrant.state,
+      postcode: payload.registrant.postcode,
+      country: payload.registrant.country,
     });
+
+    // Add payment URL if invoice was created
+    if (response.result === "success" && response.invoiceid) {
+      response.pay_url = getPaymentUrl(response.invoiceid);
+    }
+
+    return response;
   },
 
-  transfer: async (userid: number, domain: string, eppCode: string): Promise<DomainOrderResponse> => {
-    return whmcsRequest<DomainOrderResponse>("AddOrder", {
+  transfer: async (
+    userid: number, 
+    domain: string, 
+    eppCode: string,
+    paymentmethod: string = "paypal"
+  ): Promise<DomainOrderResponse> => {
+    const response = await whmcsRequest<DomainOrderResponse>("AddOrder", {
       clientid: userid,
       domain,
       domaintype: "transfer",
-      eppcode: eppCode,
+      regperiod: 1, // Transfer includes 1 year renewal
+      eppcode: eppCode, // Correct WHMCS parameter name
+      paymentmethod,
     });
+
+    // Add payment URL if invoice was created
+    if (response.result === "success" && response.invoiceid) {
+      response.pay_url = getPaymentUrl(response.invoiceid);
+    }
+
+    return response;
+  },
+
+  // Get TLD pricing from WHMCS
+  getPricing: async (): Promise<Record<string, { register: string; transfer: string; renew: string }>> => {
+    try {
+      const response = await whmcsRequest<{ pricing?: Record<string, unknown> }>("GetTLDPricing");
+      return (response.pricing || {}) as Record<string, { register: string; transfer: string; renew: string }>;
+    } catch {
+      return {};
+    }
   },
 };
 
-// Tickets endpoints
+// ============= Tickets API =============
 export const ticketsApi = {
   getAll: async (userid: number): Promise<Ticket[]> => {
     const response = await whmcsRequest<{ tickets?: { ticket: Ticket[] } }>("GetTickets", { clientid: userid });
@@ -327,27 +475,41 @@ export const ticketsApi = {
     userid: number,
     subject: string,
     message: string,
-    department?: string,
-    priority?: string
+    departmentKey?: string,
+    priority?: string,
+    serviceId?: number
   ): Promise<ApiResponse> => {
+    // Map department key to numeric ID
+    const deptId = departmentKey 
+      ? WHMCS_DEPARTMENTS[departmentKey as keyof typeof WHMCS_DEPARTMENTS]?.id || 1
+      : 1;
+
     return whmcsRequest<ApiResponse>("OpenTicket", {
       clientid: userid,
       subject,
       message,
-      deptid: department || "1",
+      deptid: deptId, // Numeric department ID
       priority: priority || "Medium",
+      ...(serviceId && { serviceid: serviceId }),
     });
   },
 
-  reply: async (ticketId: number, message: string): Promise<ApiResponse> => {
+  reply: async (ticketId: number, message: string, userid?: number): Promise<ApiResponse> => {
     return whmcsRequest<ApiResponse>("AddTicketReply", {
       ticketid: ticketId,
       message,
+      ...(userid && { clientid: userid }),
+    });
+  },
+
+  close: async (ticketId: number): Promise<ApiResponse> => {
+    return whmcsRequest<ApiResponse>("CloseTicket", {
+      ticketid: ticketId,
     });
   },
 };
 
-// Export types
+// ============= Export Types =============
 export type {
   ApiResponse,
   LoginResponse,
@@ -363,3 +525,6 @@ export type {
   DomainRegistrationPayload,
   DomainOrderResponse,
 };
+
+// Export URLs for external use
+export { WHMCS_BILLING_URL, getPaymentUrl, getInvoiceUrl };

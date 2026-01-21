@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { invoicesApi, type Invoice } from "@/lib/api";
+import { invoicesApi, type Invoice, WHMCS_BILLING_URL } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +18,7 @@ import {
   CheckCircle,
   CreditCard,
   Eye,
+  Download,
 } from "lucide-react";
 
 export default function Invoices() {
@@ -56,6 +57,13 @@ export default function Invoices() {
   const unpaidInvoices = invoices.filter((i) => i.status.toLowerCase() === "unpaid");
   const totalPaid = paidInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
   const totalUnpaid = unpaidInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
+
+  // Generate proper URLs
+  const getInvoiceViewUrl = (invoiceId: number) => 
+    `${WHMCS_BILLING_URL}/viewinvoice.php?id=${invoiceId}`;
+  
+  const getInvoicePdfUrl = (invoiceId: number) => 
+    invoicesApi.downloadPdf(invoiceId);
 
   if (isLoading) {
     return (
@@ -221,12 +229,22 @@ export default function Invoices() {
                         <div className="flex items-center justify-end gap-2">
                           <Button variant="ghost" size="sm" asChild>
                             <a
-                              href={`https://billing.vintechdev.store/viewinvoice.php?id=${invoice.id}`}
+                              href={getInvoiceViewUrl(invoice.id)}
                               target="_blank"
                               rel="noopener noreferrer"
                             >
                               <Eye className="h-4 w-4 mr-1" />
                               View
+                            </a>
+                          </Button>
+                          <Button variant="ghost" size="sm" asChild>
+                            <a
+                              href={getInvoicePdfUrl(invoice.id)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              PDF
                             </a>
                           </Button>
                           {isUnpaid && invoice.pay_url && (

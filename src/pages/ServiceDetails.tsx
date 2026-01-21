@@ -74,34 +74,10 @@ export default function ServiceDetails() {
     fetchService();
   }, [id]);
 
-  const handleAction = async (action: string, data?: Record<string, unknown>) => {
+  // Use specific WHMCS module actions
+  const handlePasswordChange = async () => {
     if (!id) return;
 
-    setActionLoading(action);
-    try {
-      const response = await servicesApi.action(parseInt(id), action, data);
-      if (response.result === "success") {
-        toast({
-          title: "Success",
-          description: `Action "${action}" completed successfully.`,
-        });
-        const updated = await servicesApi.getOne(parseInt(id));
-        setService(updated);
-      } else {
-        throw new Error(response.error || "Action failed");
-      }
-    } catch (err) {
-      toast({
-        title: "Error",
-        description: err instanceof Error ? err.message : "Action failed",
-        variant: "destructive",
-      });
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handlePasswordChange = async () => {
     if (newPassword !== confirmPassword) {
       toast({
         title: "Error",
@@ -120,10 +96,107 @@ export default function ServiceDetails() {
       return;
     }
 
-    await handleAction("changepassword", { password: newPassword });
-    setNewPassword("");
-    setConfirmPassword("");
-    setPasswordDialogOpen(false);
+    setActionLoading("changepassword");
+    try {
+      const response = await servicesApi.changePassword(parseInt(id), newPassword);
+      if (response.result === "success") {
+        toast({
+          title: "Password Changed",
+          description: "Your hosting account password has been updated.",
+        });
+        setNewPassword("");
+        setConfirmPassword("");
+        setPasswordDialogOpen(false);
+      } else {
+        throw new Error(response.error || response.message || "Failed to change password");
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to change password",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleSuspend = async () => {
+    if (!id) return;
+    setActionLoading("suspend");
+    try {
+      const response = await servicesApi.suspend(parseInt(id));
+      if (response.result === "success") {
+        toast({
+          title: "Service Suspended",
+          description: "Your hosting service has been suspended.",
+        });
+        const updated = await servicesApi.getOne(parseInt(id));
+        setService(updated);
+      } else {
+        throw new Error(response.error || response.message || "Failed to suspend");
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to suspend service",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnsuspend = async () => {
+    if (!id) return;
+    setActionLoading("unsuspend");
+    try {
+      const response = await servicesApi.unsuspend(parseInt(id));
+      if (response.result === "success") {
+        toast({
+          title: "Service Activated",
+          description: "Your hosting service has been unsuspended.",
+        });
+        const updated = await servicesApi.getOne(parseInt(id));
+        setService(updated);
+      } else {
+        throw new Error(response.error || response.message || "Failed to unsuspend");
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to unsuspend service",
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleModuleCommand = async (command: string, successMessage: string) => {
+    if (!id) return;
+    setActionLoading(command);
+    try {
+      const response = await servicesApi.moduleCommand(parseInt(id), command);
+      if (response.result === "success") {
+        toast({
+          title: "Success",
+          description: successMessage,
+        });
+        const updated = await servicesApi.getOne(parseInt(id));
+        setService(updated);
+      } else {
+        throw new Error(response.error || response.message || `Failed to execute ${command}`);
+      }
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : `Failed to execute ${command}`,
+        variant: "destructive",
+      });
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   if (isLoading) {
@@ -398,7 +471,7 @@ export default function ServiceDetails() {
                   <Button
                     variant="outline"
                     className="w-full"
-                    onClick={() => handleAction("unsuspend")}
+                    onClick={handleUnsuspend}
                     disabled={actionLoading === "unsuspend"}
                   >
                     {actionLoading === "unsuspend" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Power className="h-4 w-4 mr-2" />}
@@ -408,7 +481,7 @@ export default function ServiceDetails() {
                   <Button
                     variant="outline"
                     className="w-full text-yellow-600 hover:text-yellow-600"
-                    onClick={() => handleAction("suspend")}
+                    onClick={handleSuspend}
                     disabled={!isActive || actionLoading === "suspend"}
                   >
                     {actionLoading === "suspend" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Power className="h-4 w-4 mr-2" />}
@@ -418,7 +491,7 @@ export default function ServiceDetails() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleAction("reboot")}
+                  onClick={() => handleModuleCommand("reboot", "Server is rebooting...")}
                   disabled={!isActive || actionLoading === "reboot"}
                 >
                   {actionLoading === "reboot" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
@@ -440,7 +513,7 @@ export default function ServiceDetails() {
                 <Button
                   variant="outline"
                   className="w-full"
-                  onClick={() => handleAction("installwp")}
+                  onClick={() => handleModuleCommand("installwp", "WordPress installation started!")}
                   disabled={!isActive || actionLoading === "installwp"}
                 >
                   {actionLoading === "installwp" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}

@@ -1,12 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Globe, Shield, Check, AlertCircle } from "lucide-react";
+import { ArrowLeft, RefreshCw, Globe, Shield, Check, AlertCircle, Wallet, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
+import { domainsApi } from "@/lib/api";
+import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import Navbar from "@/components/landing/Navbar";
@@ -26,6 +29,7 @@ export default function DomainTransfer() {
   
   const [domain, setDomain] = useState("");
   const [eppCode, setEppCode] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("paypal");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -41,7 +45,7 @@ export default function DomainTransfer() {
       return;
     }
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.userid) {
       toast({
         title: "Login Required",
         description: "Please log in or create an account to transfer a domain.",
@@ -53,8 +57,38 @@ export default function DomainTransfer() {
 
     setIsSubmitting(true);
 
-    // Redirect to WHMCS transfer cart
-    window.location.href = `https://billing.vintechdev.store/cart.php?a=add&domain=transfer&query=${encodeURIComponent(domain.trim().toLowerCase())}`;
+    try {
+      // Use the proper API call with correct parameters
+      const response = await domainsApi.transfer(
+        user.userid,
+        domain.trim().toLowerCase(),
+        eppCode.trim(),
+        paymentMethod
+      );
+
+      if (response.result === "success") {
+        if (response.pay_url) {
+          // Redirect to payment
+          window.location.href = response.pay_url;
+        } else {
+          toast({
+            title: "Transfer Initiated!",
+            description: `Transfer for ${domain} has been submitted.`,
+          });
+          navigate("/domains");
+        }
+      } else {
+        throw new Error(response.message || response.error || "Transfer failed");
+      }
+    } catch (error) {
+      toast({
+        title: "Transfer Failed",
+        description: error instanceof Error ? error.message : "Failed to initiate transfer",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -111,6 +145,43 @@ export default function DomainTransfer() {
                     <p className="text-sm text-muted-foreground">
                       You can get this code from your current domain registrar
                     </p>
+                  </div>
+
+                  {/* Payment Method */}
+                  <div className="space-y-3">
+                    <Label>Payment Method</Label>
+                    <RadioGroup
+                      value={paymentMethod}
+                      onValueChange={setPaymentMethod}
+                      className="grid grid-cols-2 gap-4"
+                    >
+                      {WHMCS_CONFIG.paymentMethods.map((method) => {
+                        const Icon = method.id === "paypal" ? Wallet : CreditCard;
+                        const isSelected = paymentMethod === method.id;
+
+                        return (
+                          <div key={method.id}>
+                            <RadioGroupItem value={method.id} id={`transfer-${method.id}`} className="peer sr-only" />
+                            <Label
+                              htmlFor={`transfer-${method.id}`}
+                              className={`flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-accent ${
+                                isSelected ? "border-primary bg-primary/5" : "border-muted"
+                              }`}
+                            >
+                              <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+                                isSelected ? "gradient-primary" : "bg-primary/10"
+                              }`}>
+                                <Icon className={`h-4 w-4 ${isSelected ? "text-primary-foreground" : "text-primary"}`} />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-medium">{method.name}</p>
+                              </div>
+                              {isSelected && <Check className="h-4 w-4 text-primary" />}
+                            </Label>
+                          </div>
+                        );
+                      })}
+                    </RadioGroup>
                   </div>
 
                   <Alert>
