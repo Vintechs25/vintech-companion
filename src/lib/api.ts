@@ -428,8 +428,18 @@ interface DomainOrderResponse extends ApiResponse {
 // ============= Domains API =============
 export const domainsApi = {
   getAll: async (userid: number): Promise<Domain[]> => {
-    const response = await whmcsRequest<{ domains?: { domain: Domain[] } }>("GetClientsDomains", { clientid: userid });
-    return response.domains?.domain || [];
+    const response = await whmcsRequest<{ 
+      domains?: { domain: Domain | Domain[] };
+      totalresults?: number;
+      numreturned?: number;
+    }>("GetClientsDomains", { clientid: userid });
+    
+    // WHMCS returns a single object when there's only 1 domain, array when multiple
+    const domainData = response.domains?.domain;
+    if (!domainData) return [];
+    
+    // Normalize to array
+    return Array.isArray(domainData) ? domainData : [domainData];
   },
 
   search: async (domain: string): Promise<DomainSearchResult[]> => {
