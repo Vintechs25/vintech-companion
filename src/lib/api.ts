@@ -366,10 +366,27 @@ export const invoicesApi = {
   },
 
   getOne: async (invoiceId: number): Promise<Invoice> => {
-    const response = await whmcsRequest<Invoice>("GetInvoice", { invoiceid: invoiceId });
+    const response = await whmcsRequest<{ 
+      invoiceid?: string;
+      id?: number;
+      total: string;
+      status: string;
+      duedate: string;
+      date?: string;
+      datepaid?: string;
+    }>("GetInvoice", { invoiceid: invoiceId });
+    
+    // WHMCS GetInvoice returns invoiceid as a string, normalize to id as number
+    const normalizedId = response.invoiceid ? parseInt(response.invoiceid) : (response.id || invoiceId);
+    
     return {
-      ...response,
-      pay_url: response.status?.toLowerCase() === "unpaid" ? getPaymentUrl(invoiceId) : "",
+      id: normalizedId,
+      total: response.total,
+      status: response.status,
+      duedate: response.duedate,
+      date: response.date,
+      datepaid: response.datepaid,
+      pay_url: response.status?.toLowerCase() === "unpaid" ? getPaymentUrl(normalizedId) : "",
     };
   },
 
