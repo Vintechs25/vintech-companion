@@ -124,7 +124,7 @@ export default function InvoiceDetail() {
             </div>
             <div className="p-4 rounded-lg bg-muted/50">
               <p className="text-sm text-muted-foreground mb-1">Amount</p>
-              <p className="text-2xl font-bold text-primary">${invoice.total}</p>
+              <p className="text-2xl font-bold text-primary">KES {parseFloat(invoice.total).toLocaleString()}</p>
             </div>
           </div>
 

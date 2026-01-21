@@ -466,7 +466,7 @@ export default function OrderHosting() {
                         <div className="text-right">
                           {result.available ? (
                             <Badge variant="secondary" className="text-xs">
-                              ${result.price}/yr
+                              KES {parseFloat(result.price).toLocaleString()}/yr
                             </Badge>
                           ) : (
                             <span className="text-xs text-muted-foreground">Taken</span>
@@ -480,7 +480,7 @@ export default function OrderHosting() {
                     <Alert className="border-primary/50 bg-primary/5">
                       <CheckCircle2 className="h-4 w-4 text-primary" />
                       <AlertDescription>
-                        <span className="font-medium">{selectedDomainResult.domain}</span> is available and will be registered with your hosting order for ${selectedDomainResult.price}/year.
+                        <span className="font-medium">{selectedDomainResult.domain}</span> is available and will be registered with your hosting order for KES {parseFloat(selectedDomainResult.price).toLocaleString()}/year.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -563,7 +563,7 @@ export default function OrderHosting() {
                   <div className="text-right">
                     {domainOption === "register" && selectedDomainResult ? (
                       <>
-                        <p className="font-semibold">${domainPrice.toFixed(2)}</p>
+                        <p className="font-semibold">KES {domainPrice.toLocaleString()}</p>
                         <p className="text-xs text-muted-foreground">/year</p>
                       </>
                     ) : (
@@ -589,7 +589,7 @@ export default function OrderHosting() {
                 <div className="text-right">
                   <p className="text-2xl font-bold text-primary">
                     {formatPrice(totalPrice)}
-                    {domainPrice > 0 && <span className="text-sm font-normal text-muted-foreground"> + ${domainPrice.toFixed(2)}</span>}
+                    {domainPrice > 0 && <span className="text-sm font-normal text-muted-foreground"> + KES {domainPrice.toLocaleString()}</span>}
                   </p>
                 </div>
               </div>
@@ -654,7 +654,7 @@ export default function OrderHosting() {
                   )}
                   {domainPrice > 0 && (
                     <p className="text-sm text-muted-foreground">
-                      Domain: ${domainPrice.toFixed(2)}/yr
+                      Domain: KES {domainPrice.toLocaleString()}/yr
                     </p>
                   )}
                   <p className="text-xl font-bold">{formatPrice(totalPrice)}</p>

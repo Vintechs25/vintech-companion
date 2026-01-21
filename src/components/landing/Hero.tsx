@@ -32,7 +32,7 @@ const Hero = () => {
 
           {/* Subheadline */}
           <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-            Launch your website on blazing-fast NVMe servers with free SSL, automatic backups, and expert support — starting at just <strong className="text-foreground">$4.99/mo</strong>.
+            Launch your website on blazing-fast NVMe servers with free SSL, automatic backups, and expert support — starting at just <strong className="text-foreground">KES 167/mo</strong>.
           </p>
 
           {/* CTAs */}
