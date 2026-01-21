@@ -31,12 +31,25 @@ import {
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
+import { OrderConfirmationDialog } from "@/components/shared/OrderConfirmationDialog";
 
 const planIcons = {
   basic: Server,
   pro: Rocket,
   enterprise: Building,
 };
+
+interface OrderDetails {
+  orderId: number;
+  invoiceId: number;
+  planName: string;
+  domain: string;
+  billingCycle: string;
+  hostingPrice: number;
+  domainPrice: number;
+  totalPrice: number;
+  includesDomainRegistration: boolean;
+}
 
 export default function OrderHosting() {
   const { user } = useAuth();
@@ -54,6 +67,10 @@ export default function OrderHosting() {
   const [domainResults, setDomainResults] = useState<DomainSearchResult[]>([]);
   const [selectedDomainResult, setSelectedDomainResult] = useState<DomainSearchResult | null>(null);
   const [hasCheckedDomain, setHasCheckedDomain] = useState(false);
+
+  // Order confirmation dialog state
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
 
   const handleCheckDomain = async () => {
     if (!domain.trim()) return;
@@ -138,17 +155,19 @@ export default function OrderHosting() {
       });
 
       if (response.result === "success") {
-        toast({
-          title: "Order Placed!",
-          description: "Your hosting order has been submitted successfully. Redirecting to payment...",
+        // Show confirmation dialog with order details
+        setOrderDetails({
+          orderId: response.orderid || 0,
+          invoiceId: response.invoiceid || 0,
+          planName: product.name,
+          domain: domain.trim().toLowerCase(),
+          billingCycle: billingCycle,
+          hostingPrice: hostingPrice,
+          domainPrice: domainPrice,
+          totalPrice: totalPrice,
+          includesDomainRegistration: domainOption === "register" && !!selectedDomainResult,
         });
-        
-        // Navigate to in-app invoice page instead of external WHMCS page
-        if (response.invoiceid) {
-          navigate(`/invoices/${response.invoiceid}`);
-        } else {
-          navigate("/invoices");
-        }
+        setShowConfirmation(true);
       } else {
         throw new Error(response.message || response.error || "Order failed");
       }
@@ -649,6 +668,13 @@ export default function OrderHosting() {
           </CardFooter>
         </Card>
       </form>
+
+      {/* Order Confirmation Dialog */}
+      <OrderConfirmationDialog
+        open={showConfirmation}
+        onOpenChange={setShowConfirmation}
+        orderDetails={orderDetails}
+      />
     </div>
   );
 }
