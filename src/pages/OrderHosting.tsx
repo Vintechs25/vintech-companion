@@ -138,15 +138,16 @@ export default function OrderHosting() {
       });
 
       if (response.result === "success") {
-        if (response.pay_url) {
-          // Redirect to payment page
-          window.location.href = response.pay_url;
+        toast({
+          title: "Order Placed!",
+          description: "Your hosting order has been submitted successfully. Redirecting to payment...",
+        });
+        
+        // Navigate to in-app invoice page instead of external WHMCS page
+        if (response.invoiceid) {
+          navigate(`/invoices/${response.invoiceid}`);
         } else {
-          toast({
-            title: "Order Placed!",
-            description: "Your hosting order has been submitted successfully.",
-          });
-          navigate("/hosting");
+          navigate("/invoices");
         }
       } else {
         throw new Error(response.message || response.error || "Order failed");
