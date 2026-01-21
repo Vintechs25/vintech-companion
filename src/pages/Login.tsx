@@ -44,19 +44,10 @@ export default function Login() {
   
   const from = location.state?.from?.pathname || "/dashboard";
 
-  const handleGoogleLogin = async () => {
+  const handleGoogleLogin = () => {
     setError("");
-    const result = await initiateGoogleLogin();
-    
-    if (result.success && result.userid) {
-      // Store the session
-      localStorage.setItem("vintech_userid", result.userid.toString());
-      navigate(from, { replace: true });
-      // Force a page reload to update auth state
-      window.location.reload();
-    } else {
-      setError(result.error || "Google login failed");
-    }
+    // The hook handles the popup and page reload after completion
+    initiateGoogleLogin();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
