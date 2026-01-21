@@ -20,7 +20,9 @@ import {
   Zap,
   Building,
   CreditCard,
-  Wallet,
+  Globe,
+  PlusCircle,
+  Search,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
@@ -35,6 +37,7 @@ export default function OrderHosting() {
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState("monthly");
+  const [domainOption, setDomainOption] = useState<"register" | "existing">("existing");
   const [domain, setDomain] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [isLoading, setIsLoading] = useState(false);
@@ -218,27 +221,99 @@ export default function OrderHosting() {
           </CardContent>
         </Card>
 
-        {/* Domain Input */}
+        {/* Domain Selection */}
         <Card className="mb-6">
           <CardHeader>
             <CardTitle>Domain Name</CardTitle>
             <CardDescription>
-              Enter the domain name for your hosting account
+              Choose how you want to set up your domain
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="domain">Domain</Label>
-              <Input
-                id="domain"
-                type="text"
-                placeholder="example.com"
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                required
-              />
+          <CardContent className="space-y-6">
+            {/* Domain Option Selection */}
+            <RadioGroup
+              value={domainOption}
+              onValueChange={(value) => {
+                setDomainOption(value as "register" | "existing");
+                setDomain("");
+              }}
+              className="grid gap-4 md:grid-cols-2"
+            >
+              <div>
+                <RadioGroupItem value="register" id="domain-register" className="peer sr-only" />
+                <Label
+                  htmlFor="domain-register"
+                  className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-accent ${
+                    domainOption === "register" ? "border-primary bg-primary/5" : "border-muted"
+                  }`}
+                >
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                    domainOption === "register" ? "gradient-primary" : "bg-primary/10"
+                  }`}>
+                    <PlusCircle className={`h-5 w-5 ${domainOption === "register" ? "text-primary-foreground" : "text-primary"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Register a New Domain</p>
+                    <p className="text-sm text-muted-foreground">Search and register a brand new domain</p>
+                  </div>
+                  {domainOption === "register" && <Check className="h-5 w-5 text-primary" />}
+                </Label>
+              </div>
+
+              <div>
+                <RadioGroupItem value="existing" id="domain-existing" className="peer sr-only" />
+                <Label
+                  htmlFor="domain-existing"
+                  className={`flex items-center gap-4 p-4 rounded-lg border-2 cursor-pointer transition-all hover:bg-accent ${
+                    domainOption === "existing" ? "border-primary bg-primary/5" : "border-muted"
+                  }`}
+                >
+                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                    domainOption === "existing" ? "gradient-primary" : "bg-primary/10"
+                  }`}>
+                    <Globe className={`h-5 w-5 ${domainOption === "existing" ? "text-primary-foreground" : "text-primary"}`} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-medium">Use Existing Domain</p>
+                    <p className="text-sm text-muted-foreground">I already own a domain name</p>
+                  </div>
+                  {domainOption === "existing" && <Check className="h-5 w-5 text-primary" />}
+                </Label>
+              </div>
+            </RadioGroup>
+
+            {/* Domain Input */}
+            <div className="space-y-3">
+              <Label htmlFor="domain">
+                {domainOption === "register" ? "Domain to Register" : "Your Domain Name"}
+              </Label>
+              <div className="flex gap-3">
+                <Input
+                  id="domain"
+                  type="text"
+                  placeholder={domainOption === "register" ? "mynewsite.com" : "example.com"}
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  className="flex-1"
+                  required
+                />
+                {domainOption === "register" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate(`/domains/search?domain=${encodeURIComponent(domain)}`)}
+                    disabled={!domain}
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Check
+                  </Button>
+                )}
+              </div>
               <p className="text-sm text-muted-foreground">
-                You can use an existing domain or register a new one
+                {domainOption === "register" 
+                  ? "Enter the domain you want to register. We'll check availability."
+                  : "Enter your existing domain. You'll update DNS after setup."
+                }
               </p>
             </div>
           </CardContent>
