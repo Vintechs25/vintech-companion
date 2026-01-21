@@ -4,10 +4,10 @@ import { servicesApi, type Service } from "@/lib/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -17,11 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { CopyButton } from "@/components/shared/CopyButton";
-import { CountdownBadge } from "@/components/shared/CountdownBadge";
 import {
-  Server,
   ArrowLeft,
   AlertCircle,
   ExternalLink,
@@ -33,16 +30,100 @@ import {
   Database,
   Mail,
   Shield,
-  HardDrive,
   FolderOpen,
   Download,
   Settings,
   Activity,
-  User,
-  Calendar,
-  CreditCard,
+  Terminal,
+  Server,
+  Clock,
+  Copy,
+  Check,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+
+// Cloudways-style tabs
+const managementTabs = [
+  { id: "access", label: "Access Details", icon: Key },
+  { id: "monitoring", label: "Monitoring", icon: Activity },
+  { id: "applications", label: "Applications", icon: Globe },
+  { id: "settings", label: "Settings", icon: Settings },
+];
+
+// Access detail row component
+function AccessRow({
+  label,
+  value,
+  copyable = true,
+  masked = false,
+}: {
+  label: string;
+  value: string;
+  copyable?: boolean;
+  masked?: boolean;
+}) {
+  const [copied, setCopied] = useState(false);
+  const [showValue, setShowValue] = useState(!masked);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2">
+        <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
+          {masked && !showValue ? "••••••••" : value || "—"}
+        </code>
+        {masked && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2"
+            onClick={() => setShowValue(!showValue)}
+          >
+            {showValue ? "Hide" : "Show"}
+          </Button>
+        )}
+        {copyable && value && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleCopy}
+          >
+            {copied ? (
+              <Check className="h-3.5 w-3.5 text-success" />
+            ) : (
+              <Copy className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Status indicator
+function StatusIndicator({ active }: { active: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span
+        className={cn(
+          "h-2.5 w-2.5 rounded-full",
+          active ? "bg-success animate-pulse-subtle" : "bg-muted-foreground"
+        )}
+      />
+      <span className={cn("text-sm font-medium", active ? "text-success" : "text-muted-foreground")}>
+        {active ? "Running" : "Stopped"}
+      </span>
+    </div>
+  );
+}
 
 export default function ServiceDetails() {
   const { id } = useParams();
@@ -65,7 +146,7 @@ export default function ServiceDetails() {
         setService(data);
       } catch (err) {
         console.error("Service error:", err);
-        setError("Failed to load service details. Please try again.");
+        setError("Failed to load service details");
       } finally {
         setIsLoading(false);
       }
@@ -74,25 +155,16 @@ export default function ServiceDetails() {
     fetchService();
   }, [id]);
 
-  // Use specific WHMCS module actions
   const handlePasswordChange = async () => {
     if (!id) return;
 
     if (newPassword !== confirmPassword) {
-      toast({
-        title: "Error",
-        description: "Passwords do not match",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Passwords do not match", variant: "destructive" });
       return;
     }
 
     if (newPassword.length < 8) {
-      toast({
-        title: "Error",
-        description: "Password must be at least 8 characters",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Password must be at least 8 characters", variant: "destructive" });
       return;
     }
 
@@ -100,15 +172,12 @@ export default function ServiceDetails() {
     try {
       const response = await servicesApi.changePassword(parseInt(id), newPassword);
       if (response.result === "success") {
-        toast({
-          title: "Password Changed",
-          description: "Your hosting account password has been updated.",
-        });
+        toast({ title: "Success", description: "Password has been changed" });
         setNewPassword("");
         setConfirmPassword("");
         setPasswordDialogOpen(false);
       } else {
-        throw new Error(response.error || response.message || "Failed to change password");
+        throw new Error(response.error || "Failed to change password");
       }
     } catch (err) {
       toast({
@@ -127,19 +196,16 @@ export default function ServiceDetails() {
     try {
       const response = await servicesApi.suspend(parseInt(id));
       if (response.result === "success") {
-        toast({
-          title: "Service Suspended",
-          description: "Your hosting service has been suspended.",
-        });
+        toast({ title: "Success", description: "Service has been suspended" });
         const updated = await servicesApi.getOne(parseInt(id));
         setService(updated);
       } else {
-        throw new Error(response.error || response.message || "Failed to suspend");
+        throw new Error(response.error || "Failed to suspend");
       }
     } catch (err) {
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to suspend service",
+        description: err instanceof Error ? err.message : "Failed to suspend",
         variant: "destructive",
       });
     } finally {
@@ -153,19 +219,16 @@ export default function ServiceDetails() {
     try {
       const response = await servicesApi.unsuspend(parseInt(id));
       if (response.result === "success") {
-        toast({
-          title: "Service Activated",
-          description: "Your hosting service has been unsuspended.",
-        });
+        toast({ title: "Success", description: "Service has been activated" });
         const updated = await servicesApi.getOne(parseInt(id));
         setService(updated);
       } else {
-        throw new Error(response.error || response.message || "Failed to unsuspend");
+        throw new Error(response.error || "Failed to unsuspend");
       }
     } catch (err) {
       toast({
         title: "Error",
-        description: err instanceof Error ? err.message : "Failed to unsuspend service",
+        description: err instanceof Error ? err.message : "Failed to unsuspend",
         variant: "destructive",
       });
     } finally {
@@ -179,14 +242,11 @@ export default function ServiceDetails() {
     try {
       const response = await servicesApi.moduleCommand(parseInt(id), command);
       if (response.result === "success") {
-        toast({
-          title: "Success",
-          description: successMessage,
-        });
+        toast({ title: "Success", description: successMessage });
         const updated = await servicesApi.getOne(parseInt(id));
         setService(updated);
       } else {
-        throw new Error(response.error || response.message || `Failed to execute ${command}`);
+        throw new Error(response.error || `Failed to execute ${command}`);
       }
     } catch (err) {
       toast({
@@ -201,30 +261,20 @@ export default function ServiceDetails() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link to="/hosting">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-10 rounded-lg" />
+          <div>
+            <Skeleton className="h-6 w-48 mb-2" />
+            <Skeleton className="h-4 w-32" />
+          </div>
         </div>
+        <Skeleton className="h-12 w-full rounded-lg" />
         <div className="grid gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <CardContent className="p-6">
-              <div className="space-y-4">
-                {[1, 2, 3, 4].map((i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <Skeleton className="h-32 w-full" />
-            </CardContent>
-          </Card>
+          <div className="lg:col-span-2">
+            <Skeleton className="h-96 w-full rounded-lg" />
+          </div>
+          <Skeleton className="h-64 w-full rounded-lg" />
         </div>
       </div>
     );
@@ -232,20 +282,11 @@ export default function ServiceDetails() {
 
   if (error || !service) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link to="/hosting">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-          <h1 className="text-3xl font-bold">Service Details</h1>
-        </div>
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error || "Service not found"}</AlertDescription>
-        </Alert>
-        <Button onClick={() => navigate("/hosting")}>Back to Hosting</Button>
+      <div className="flex flex-col items-center justify-center py-16 text-center">
+        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+        <h2 className="text-lg font-semibold mb-2">Service not found</h2>
+        <p className="text-muted-foreground mb-4">{error || "The requested service could not be loaded"}</p>
+        <Button onClick={() => navigate("/hosting")}>Back to Projects</Button>
       </div>
     );
   }
@@ -253,261 +294,246 @@ export default function ServiceDetails() {
   const isActive = service.status.toLowerCase() === "active";
   const isSuspended = service.status.toLowerCase() === "suspended";
 
-  const InfoItem = ({ icon: Icon, label, value, copyable = false }: { icon: React.ElementType; label: string; value: string; copyable?: boolean }) => (
-    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-      <div className="flex items-center gap-3">
-        <Icon className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">{label}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <code className="text-sm font-medium bg-background px-2 py-1 rounded">{value}</code>
-        {copyable && value !== "N/A" && <CopyButton text={value} className="h-7 w-7" />}
-      </div>
-    </div>
-  );
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" asChild>
-            <Link to="/hosting">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header - Cloudways Style */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div className="flex items-start gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 mt-1"
+            onClick={() => navigate("/hosting")}
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div className="flex-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl lg:text-3xl font-bold">{service.domain}</h1>
-              <StatusBadge status={service.status} />
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                <Server className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div>
+                <h1 className="text-xl font-semibold">{service.domain}</h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <StatusIndicator active={isActive} />
+                  <span className="text-muted-foreground">·</span>
+                  <span className="text-sm text-muted-foreground">{service.product || "Hosting"}</span>
+                </div>
+              </div>
             </div>
-            <p className="text-muted-foreground">Service #{service.id}</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-2 ml-14 md:ml-0">
           {service.panel_url && (
-            <Button asChild className="gradient-primary hover:opacity-90 hidden sm:flex">
+            <Button asChild>
               <a href={service.panel_url} target="_blank" rel="noopener noreferrer">
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Open CyberPanel
+                <Terminal className="h-4 w-4 mr-2" />
+                CyberPanel
+                <ExternalLink className="h-3 w-3 ml-2" />
               </a>
             </Button>
           )}
         </div>
       </div>
 
-      {/* Main Content with Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-2 lg:grid-cols-5 h-auto">
-          <TabsTrigger value="overview" className="gap-2">
-            <Activity className="h-4 w-4" />
-            <span className="hidden sm:inline">Overview</span>
-          </TabsTrigger>
-          <TabsTrigger value="actions" className="gap-2">
-            <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Actions</span>
-          </TabsTrigger>
-          <TabsTrigger value="databases" className="gap-2">
-            <Database className="h-4 w-4" />
-            <span className="hidden sm:inline">Databases</span>
-          </TabsTrigger>
-          <TabsTrigger value="emails" className="gap-2">
-            <Mail className="h-4 w-4" />
-            <span className="hidden sm:inline">Emails</span>
-          </TabsTrigger>
-          <TabsTrigger value="ssl" className="gap-2">
-            <Shield className="h-4 w-4" />
-            <span className="hidden sm:inline">SSL</span>
-          </TabsTrigger>
+      {/* Cloudways-style Tabbed Management */}
+      <Tabs defaultValue="access" className="space-y-6">
+        <TabsList className="bg-muted/50 p-1 h-auto">
+          {managementTabs.map((tab) => (
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="gap-2 data-[state=active]:bg-background"
+            >
+              <tab.icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{tab.label}</span>
+            </TabsTrigger>
+          ))}
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
+        {/* Access Details Tab */}
+        <TabsContent value="access" className="space-y-6">
           <div className="grid gap-6 lg:grid-cols-3">
+            {/* Server Details */}
             <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle>Service Information</CardTitle>
-                <CardDescription>Your hosting account details</CardDescription>
+                <CardTitle className="text-base">Server Details</CardTitle>
+                <CardDescription>Connection information for your server</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <InfoItem icon={Globe} label="Domain" value={service.domain} copyable />
-                <InfoItem icon={Server} label="IP Address" value={service.ip || "N/A"} copyable />
-                <InfoItem icon={User} label="Username" value={service.username || "N/A"} copyable />
-                <InfoItem icon={ExternalLink} label="Panel URL" value={service.panel_url || "N/A"} copyable />
-                {service.product && (
-                  <InfoItem icon={HardDrive} label="Product" value={service.product} />
-                )}
-                {service.billingcycle && (
-                  <InfoItem icon={CreditCard} label="Billing Cycle" value={service.billingcycle} />
-                )}
+              <CardContent className="space-y-0">
+                <AccessRow label="Domain" value={service.domain} />
+                <AccessRow label="IP Address" value={service.ip || ""} />
+                <AccessRow label="Username" value={service.username || ""} />
+                <AccessRow label="Panel URL" value={service.panel_url || ""} />
               </CardContent>
             </Card>
 
-            <div className="space-y-6">
-              {/* Renewal Card */}
+            {/* Quick Actions */}
+            <div className="space-y-4">
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Next Renewal</CardTitle>
+                  <CardTitle className="text-base">Quick Actions</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  {service.nextduedate ? (
-                    <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold">{service.nextduedate}</span>
-                      <CountdownBadge date={service.nextduedate} />
-                    </div>
+                <CardContent className="space-y-2">
+                  <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full justify-start gap-2" disabled={!isActive}>
+                        <Key className="h-4 w-4" />
+                        Change Password
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Change Password</DialogTitle>
+                        <DialogDescription>Enter a new password for your hosting account</DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label>New Password</Label>
+                          <Input
+                            type="password"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="Enter new password"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Confirm Password</Label>
+                          <Input
+                            type="password"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Confirm new password"
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
+                          Cancel
+                        </Button>
+                        <Button onClick={handlePasswordChange} disabled={actionLoading === "changepassword"}>
+                          {actionLoading === "changepassword" && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
+                          Update Password
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start gap-2"
+                    onClick={() => handleModuleCommand("reboot", "Server is rebooting...")}
+                    disabled={!isActive || actionLoading === "reboot"}
+                  >
+                    {actionLoading === "reboot" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-4 w-4" />
+                    )}
+                    Restart Server
+                  </Button>
+
+                  {isSuspended ? (
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-success hover:text-success"
+                      onClick={handleUnsuspend}
+                      disabled={actionLoading === "unsuspend"}
+                    >
+                      {actionLoading === "unsuspend" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Power className="h-4 w-4" />
+                      )}
+                      Start Server
+                    </Button>
                   ) : (
-                    <p className="text-muted-foreground">N/A</p>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start gap-2 text-warning hover:text-warning"
+                      onClick={handleSuspend}
+                      disabled={!isActive || actionLoading === "suspend"}
+                    >
+                      {actionLoading === "suspend" ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Power className="h-4 w-4" />
+                      )}
+                      Stop Server
+                    </Button>
                   )}
                 </CardContent>
               </Card>
 
-              {/* Quick Links */}
+              {/* Renewal Info */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base">Quick Links</CardTitle>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Renewal
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                  {service.panel_url && (
-                    <Button variant="outline" className="w-full justify-start" asChild>
-                      <a href={service.panel_url} target="_blank" rel="noopener noreferrer">
-                        <ExternalLink className="h-4 w-4 mr-2" />
-                        CyberPanel
-                      </a>
-                    </Button>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Next Due Date</span>
+                    <span className="font-medium">{service.nextduedate || "—"}</span>
+                  </div>
+                  {service.billingcycle && (
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-sm text-muted-foreground">Billing Cycle</span>
+                      <Badge variant="secondary">{service.billingcycle}</Badge>
+                    </div>
                   )}
-                  {service.panel_url && (
-                    <Button variant="outline" className="w-full justify-start" asChild>
-                      <a href={`${service.panel_url}/filemanager`} target="_blank" rel="noopener noreferrer">
-                        <FolderOpen className="h-4 w-4 mr-2" />
-                        File Manager
-                      </a>
-                    </Button>
-                  )}
-                  <Button variant="outline" className="w-full justify-start" asChild>
-                    <a href={`https://billing.vintechdev.store/clientarea.php?action=productdetails&id=${service.id}`} target="_blank" rel="noopener noreferrer">
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Billing Details
-                    </a>
-                  </Button>
                 </CardContent>
               </Card>
             </div>
           </div>
         </TabsContent>
 
-        {/* Actions Tab */}
-        <TabsContent value="actions" className="space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {/* Password Change */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Key className="h-4 w-4" />
-                  Change Password
-                </CardTitle>
-                <CardDescription>Update your hosting account password</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full" disabled={!isActive}>
-                      Change Password
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Change Password</DialogTitle>
-                      <DialogDescription>Enter a new password for your hosting account</DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="newPassword">New Password</Label>
-                        <Input
-                          id="newPassword"
-                          type="password"
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="••••••••"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">Confirm Password</Label>
-                        <Input
-                          id="confirmPassword"
-                          type="password"
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="••••••••"
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button variant="outline" onClick={() => setPasswordDialogOpen(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handlePasswordChange}
-                        disabled={actionLoading === "changepassword"}
-                        className="gradient-primary"
-                      >
-                        {actionLoading === "changepassword" && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                        Change Password
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              </CardContent>
-            </Card>
-
-            {/* Power Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Power className="h-4 w-4" />
-                  Power Management
-                </CardTitle>
-                <CardDescription>Control your server state</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {isSuspended ? (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={handleUnsuspend}
-                    disabled={actionLoading === "unsuspend"}
-                  >
-                    {actionLoading === "unsuspend" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Power className="h-4 w-4 mr-2" />}
-                    Unsuspend
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    className="w-full text-yellow-600 hover:text-yellow-600"
-                    onClick={handleSuspend}
-                    disabled={!isActive || actionLoading === "suspend"}
-                  >
-                    {actionLoading === "suspend" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Power className="h-4 w-4 mr-2" />}
-                    Suspend
+        {/* Monitoring Tab */}
+        <TabsContent value="monitoring" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Server Monitoring
+              </CardTitle>
+              <CardDescription>View server performance metrics in CyberPanel</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col items-center justify-center py-12">
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
+                  <Activity className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-medium mb-2">Server Metrics</h3>
+                <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
+                  Monitor CPU, memory, disk usage and more through your CyberPanel dashboard
+                </p>
+                {service.panel_url && (
+                  <Button asChild>
+                    <a href={service.panel_url} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open CyberPanel
+                    </a>
                   </Button>
                 )}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => handleModuleCommand("reboot", "Server is rebooting...")}
-                  disabled={!isActive || actionLoading === "reboot"}
-                >
-                  {actionLoading === "reboot" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                  Reboot Server
-                </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-            {/* WordPress Install */}
+        {/* Applications Tab */}
+        <TabsContent value="applications" className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {/* WordPress */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <Globe className="h-4 w-4" />
                   WordPress
                 </CardTitle>
-                <CardDescription>One-click WordPress installation</CardDescription>
+                <CardDescription>One-click installation</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button
@@ -516,99 +542,144 @@ export default function ServiceDetails() {
                   onClick={() => handleModuleCommand("installwp", "WordPress installation started!")}
                   disabled={!isActive || actionLoading === "installwp"}
                 >
-                  {actionLoading === "installwp" ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Download className="h-4 w-4 mr-2" />}
+                  {actionLoading === "installwp" ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Download className="h-4 w-4 mr-2" />
+                  )}
                   Install WordPress
                 </Button>
+              </CardContent>
+            </Card>
+
+            {/* Databases */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Database className="h-4 w-4" />
+                  Databases
+                </CardTitle>
+                <CardDescription>MySQL management</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {service.panel_url && (
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href={`${service.panel_url}/dataBases/listDatabases`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Manage Databases
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* File Manager */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FolderOpen className="h-4 w-4" />
+                  File Manager
+                </CardTitle>
+                <CardDescription>Browse and edit files</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {service.panel_url && (
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href={`${service.panel_url}/filemanager`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Open File Manager
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Email */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Email Accounts
+                </CardTitle>
+                <CardDescription>Create and manage emails</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {service.panel_url && (
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href={`${service.panel_url}/email/listEmails`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Manage Emails
+                    </a>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* SSL */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Shield className="h-4 w-4" />
+                  SSL Certificate
+                </CardTitle>
+                <CardDescription>Free Let's Encrypt SSL</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {service.panel_url && (
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href={`${service.panel_url}/manageSSL/issueSSL`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Issue SSL
+                    </a>
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
-        {/* Databases Tab */}
-        <TabsContent value="databases" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5" />
-                Database Management
-              </CardTitle>
-              <CardDescription>Create and manage MySQL databases through CyberPanel</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Database className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground mb-4">
-                  Database management is available through CyberPanel
-                </p>
-                {service.panel_url && (
-                  <Button asChild className="gradient-primary">
-                    <a href={`${service.panel_url}/dataBases/listDatabases`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Manage Databases in CyberPanel
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Service Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-0">
+                <AccessRow label="Service ID" value={String(service.id)} copyable={false} />
+                <AccessRow label="Product" value={service.product || "—"} copyable={false} />
+                <AccessRow label="Status" value={service.status} copyable={false} />
+                <AccessRow label="Billing Cycle" value={service.billingcycle || "—"} copyable={false} />
+                <AccessRow label="Next Due Date" value={service.nextduedate || "—"} copyable={false} />
+              </CardContent>
+            </Card>
 
-        {/* Emails Tab */}
-        <TabsContent value="emails" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Email Management
-              </CardTitle>
-              <CardDescription>Create and manage email accounts through CyberPanel</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Mail className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground mb-4">
-                  Email management is available through CyberPanel
-                </p>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">External Links</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button variant="outline" className="w-full justify-start gap-2" asChild>
+                  <a
+                    href={`https://billing.vintechdev.store/clientarea.php?action=productdetails&id=${service.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    View in Billing Portal
+                  </a>
+                </Button>
                 {service.panel_url && (
-                  <Button asChild className="gradient-primary">
-                    <a href={`${service.panel_url}/email/listEmails`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Manage Emails in CyberPanel
+                  <Button variant="outline" className="w-full justify-start gap-2" asChild>
+                    <a href={service.panel_url} target="_blank" rel="noopener noreferrer">
+                      <Terminal className="h-4 w-4" />
+                      Open CyberPanel
                     </a>
                   </Button>
                 )}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* SSL Tab */}
-        <TabsContent value="ssl" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" />
-                SSL Certificates
-              </CardTitle>
-              <CardDescription>Manage SSL/TLS certificates through CyberPanel</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8">
-                <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                <p className="text-muted-foreground mb-4">
-                  Issue free Let's Encrypt SSL certificates through CyberPanel
-                </p>
-                {service.panel_url && (
-                  <Button asChild className="gradient-primary">
-                    <a href={`${service.panel_url}/manageSSL/issueSSL`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Manage SSL in CyberPanel
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
