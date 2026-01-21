@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import ForgotPassword from "./pages/ForgotPassword";
+import AuthCallback from "./pages/AuthCallback";
 import ClientLayout from "./layouts/ClientLayout";
 import Dashboard from "./pages/Dashboard";
 import MyHosting from "./pages/MyHosting";
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/google/callback" element={<AuthCallback />} />
               <Route path="/domains/search" element={<DomainSearch />} />
               <Route path="/domains/register" element={<DomainRegister />} />
               <Route path="/domains/transfer" element={<DomainTransfer />} />
