@@ -5,47 +5,81 @@ export const WHMCS_CONFIG = {
   // Base URLs
   billingUrl: "https://billing.vintechdev.store",
   
+  // Currency
+  currency: "KES",
+  currencySymbol: "KES",
+  
   // Product IDs - Update these to match your WHMCS Products/Services
   products: {
     basic: {
       pid: 1,
-      name: "Basic",
-      monthlyPrice: 4.99,
+      name: "Basic Hosting",
+      tagline: "Affordable hosting for personal websites",
+      description: "Perfect for personal websites, portfolios, and small projects.",
+      // Pricing in KES
+      semiannualPrice: 1200,
+      annualPrice: 2000,
       features: [
         "5 GB SSD Storage",
         "1 Website",
         "Free SSL Certificate",
         "Weekly Backups",
+        "Email Accounts",
+        "Basic Security Protection",
         "Email Support",
       ],
+      limits: [
+        "1 website",
+        "Limited CPU & RAM",
+        "Fair usage policy applies",
+      ],
+      orderUrl: "https://billing.vintechdev.store/index.php?rp=/store/hosting-plans/basic-hosting",
     },
     pro: {
       pid: 2,
-      name: "Professional",
-      monthlyPrice: 9.99,
+      name: "Professional Hosting",
+      tagline: "Best value for growing websites",
+      description: "Reliable hosting for businesses and professionals.",
+      // Pricing in KES
+      semiannualPrice: 2600,
+      annualPrice: 4500,
       features: [
-        "25 GB NVMe Storage",
-        "Unlimited Websites",
+        "20-25 GB NVMe Storage",
+        "Unlimited Websites (Fair Use)",
         "Free SSL Certificates",
         "Daily Backups",
+        "Unlimited Email Accounts",
+        "Enhanced Security Protection",
         "Priority Support",
-        "Free Domain",
       ],
+      limits: [
+        "Fair usage policy",
+        "Medium CPU & RAM allocation",
+      ],
+      orderUrl: "https://billing.vintechdev.store/index.php?rp=/store/hosting-plans/professionalhosting",
     },
     enterprise: {
       pid: 3,
-      name: "Enterprise",
-      monthlyPrice: 24.99,
+      name: "Enterprise Hosting",
+      tagline: "High-performance hosting for serious businesses",
+      description: "Advanced hosting for high-traffic and mission-critical websites.",
+      // Pricing in KES
+      semiannualPrice: 5500,
+      annualPrice: 9500,
       features: [
-        "100 GB NVMe Storage",
+        "50-100 GB NVMe Storage",
         "Unlimited Websites",
         "Free SSL Certificates",
-        "Real-time Backups",
-        "24/7 Phone Support",
-        "Free Domain",
-        "Dedicated IP",
-        "Advanced Security",
+        "Daily / Real-Time Backups",
+        "Dedicated IP Address",
+        "Advanced Security & Firewall",
+        "24/7 Priority Support",
       ],
+      limits: [
+        "Higher CPU & RAM priority",
+        "Designed for business workloads",
+      ],
+      orderUrl: "https://billing.vintechdev.store/index.php?rp=/store/hosting-plans/enterprise",
     },
   },
 
@@ -56,15 +90,16 @@ export const WHMCS_CONFIG = {
     billing: { id: 3, name: "Billing" },
   },
 
-  // Billing cycles with discounts
+  // Billing cycles - ONLY Semi-Annual and Annual available
   billingCycles: {
-    monthly: { value: "monthly", label: "Monthly", months: 1, discount: 0 },
-    quarterly: { value: "quarterly", label: "Quarterly", months: 3, discount: 5 },
-    semiannually: { value: "semiannually", label: "Semi-Annually", months: 6, discount: 10 },
-    annually: { value: "annually", label: "Annually", months: 12, discount: 15 },
+    semiannually: { value: "semiannually", label: "Semi-Annual (6 Months)", months: 6, discount: 0 },
+    annually: { value: "annually", label: "Annual (12 Months)", months: 12, discount: 0, recommended: true },
   },
 
-// Payment methods
+  // Default billing cycle
+  defaultBillingCycle: "annually",
+
+  // Payment methods
   paymentMethods: [
     { id: "paystack", name: "Pay with M-Pesa, Card & Bank", description: "Debit/Credit Cards, M-Pesa, Bank Transfer" },
   ],
@@ -82,27 +117,36 @@ export function getDepartmentById(deptKey: string) {
   return WHMCS_CONFIG.departments[deptKey as keyof typeof WHMCS_CONFIG.departments];
 }
 
-export function calculatePrice(basePrice: number, billingCycle: string): number {
-  const cycle = WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles];
-  if (!cycle) return basePrice;
+export function getProductPrice(productKey: string, billingCycle: string): number {
+  const product = WHMCS_CONFIG.products[productKey as keyof typeof WHMCS_CONFIG.products];
+  if (!product) return 0;
   
-  const months = cycle.months;
-  const discount = cycle.discount / 100;
-  const totalBeforeDiscount = basePrice * months;
-  
-  return totalBeforeDiscount * (1 - discount);
+  if (billingCycle === "annually") {
+    return product.annualPrice;
+  }
+  return product.semiannualPrice;
 }
 
-export function formatBillingCyclePrice(baseMonthlyPrice: number, billingCycle: string): string {
+export function calculatePrice(productKey: string, billingCycle: string): number {
+  return getProductPrice(productKey, billingCycle);
+}
+
+export function getMonthlyEquivalent(productKey: string, billingCycle: string): number {
+  const total = getProductPrice(productKey, billingCycle);
   const cycle = WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles];
-  if (!cycle) return `$${baseMonthlyPrice.toFixed(2)}/mo`;
+  if (!cycle) return total;
+  return Math.round(total / cycle.months);
+}
+
+export function formatPrice(amount: number): string {
+  return `KES ${amount.toLocaleString()}`;
+}
+
+export function formatBillingCyclePrice(productKey: string, billingCycle: string): string {
+  const total = getProductPrice(productKey, billingCycle);
+  const cycle = WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles];
+  if (!cycle) return formatPrice(total);
   
-  const total = calculatePrice(baseMonthlyPrice, billingCycle);
-  const perMonth = total / cycle.months;
-  
-  if (cycle.months === 1) {
-    return `$${total.toFixed(2)}/mo`;
-  }
-  
-  return `$${total.toFixed(2)} ($${perMonth.toFixed(2)}/mo)`;
+  const perMonth = Math.round(total / cycle.months);
+  return `${formatPrice(total)} (≈ ${formatPrice(perMonth)}/mo)`;
 }

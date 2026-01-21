@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { orderApi, domainsApi, DomainSearchResult } from "@/lib/api";
-import { WHMCS_CONFIG, calculatePrice, formatBillingCyclePrice } from "@/lib/whmcs-config";
+import { WHMCS_CONFIG, getProductPrice, formatPrice, getMonthlyEquivalent } from "@/lib/whmcs-config";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Server,
   Check,
@@ -54,8 +54,14 @@ interface OrderDetails {
 export default function OrderHosting() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
-  const [billingCycle, setBillingCycle] = useState("monthly");
+  const [searchParams] = useSearchParams();
+  
+  // Initialize from URL params
+  const initialPlan = searchParams.get("plan") || null;
+  const initialCycle = searchParams.get("cycle") || WHMCS_CONFIG.defaultBillingCycle;
+  
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(initialPlan);
+  const [billingCycle, setBillingCycle] = useState(initialCycle);
   const [domainOption, setDomainOption] = useState<"register" | "existing">("existing");
   const [domain, setDomain] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("paystack");
@@ -71,6 +77,13 @@ export default function OrderHosting() {
   // Order confirmation dialog state
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [orderDetails, setOrderDetails] = useState<OrderDetails | null>(null);
+
+  // Validate billing cycle on mount
+  useEffect(() => {
+    if (!["semiannually", "annually"].includes(billingCycle)) {
+      setBillingCycle(WHMCS_CONFIG.defaultBillingCycle);
+    }
+  }, [billingCycle]);
 
   const handleCheckDomain = async () => {
     if (!domain.trim()) return;
@@ -128,7 +141,7 @@ export default function OrderHosting() {
 
     if (!user?.userid) {
       setError("Please log in to continue");
-      navigate("/login?redirect=/hosting/order");
+      navigate("/login?redirect=/order");
       return;
     }
 
@@ -182,8 +195,8 @@ export default function OrderHosting() {
     ? WHMCS_CONFIG.products[selectedPlan as keyof typeof WHMCS_CONFIG.products] 
     : null;
 
-  const hostingPrice = selectedProduct 
-    ? calculatePrice(selectedProduct.monthlyPrice, billingCycle) 
+  const hostingPrice = selectedPlan 
+    ? getProductPrice(selectedPlan, billingCycle) 
     : 0;
 
   const domainPrice = domainOption === "register" && selectedDomainResult 
@@ -191,6 +204,9 @@ export default function OrderHosting() {
     : 0;
 
   const totalPrice = hostingPrice + domainPrice;
+
+  const billingCycleLabel = WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.label || "Annual";
+  const billingMonths = WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.months || 12;
 
   return (
     <div className="space-y-6">
@@ -210,12 +226,46 @@ export default function OrderHosting() {
       )}
 
       <form onSubmit={handleOrder}>
+        {/* Billing Cycle Toggle */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Billing Period</CardTitle>
+            <CardDescription>
+              Choose your billing cycle
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ToggleGroup
+              type="single"
+              value={billingCycle}
+              onValueChange={(value) => value && setBillingCycle(value)}
+              className="justify-start"
+            >
+              <ToggleGroupItem
+                value="semiannually"
+                className="px-6 py-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+              >
+                6 Months
+              </ToggleGroupItem>
+              <ToggleGroupItem
+                value="annually"
+                className="px-6 py-3 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground flex items-center"
+              >
+                12 Months
+                <Badge className="ml-2 text-xs bg-primary/20 text-primary border-0">Best Value</Badge>
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </CardContent>
+        </Card>
+
         {/* Plans */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
           {Object.entries(WHMCS_CONFIG.products).map(([key, plan]) => {
             const Icon = planIcons[key as keyof typeof planIcons] || Server;
             const isSelected = selectedPlan === key;
             const isPro = key === "pro";
+            const price = getProductPrice(key, billingCycle);
+            const monthlyEquivalent = getMonthlyEquivalent(key, billingCycle);
             
             return (
               <Card
@@ -240,11 +290,14 @@ export default function OrderHosting() {
                     <Icon className={`h-6 w-6 ${isSelected ? "text-primary-foreground" : "text-primary"}`} />
                   </div>
                   <CardTitle>{plan.name}</CardTitle>
-                  <CardDescription>
+                  <p className="text-sm text-primary font-medium">{plan.tagline}</p>
+                  <CardDescription className="mt-2">
                     <span className="text-3xl font-bold text-foreground">
-                      ${plan.monthlyPrice}
+                      {formatPrice(price)}
                     </span>
-                    <span className="text-muted-foreground">/month</span>
+                    <span className="text-muted-foreground block text-sm mt-1">
+                      ≈ {formatPrice(monthlyEquivalent)}/mo
+                    </span>
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -271,38 +324,6 @@ export default function OrderHosting() {
             );
           })}
         </div>
-
-        {/* Billing Cycle */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>Billing Cycle</CardTitle>
-            <CardDescription>
-              Save more with longer billing periods
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select value={billingCycle} onValueChange={setBillingCycle}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(WHMCS_CONFIG.billingCycles).map(([key, cycle]) => (
-                  <SelectItem key={key} value={key}>
-                    {cycle.label}
-                    {cycle.discount > 0 && (
-                      <span className="ml-2 text-primary">Save {cycle.discount}%</span>
-                    )}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedProduct && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Total: {formatBillingCyclePrice(selectedProduct.monthlyPrice, billingCycle)}
-              </p>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Domain Selection */}
         <Card className="mb-6">
@@ -487,7 +508,7 @@ export default function OrderHosting() {
 
         {/* Order Summary */}
         {(selectedProduct || selectedDomainResult) && (
-          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <Card className="mb-6 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ShoppingCart className="h-5 w-5 text-primary" />
@@ -504,22 +525,16 @@ export default function OrderHosting() {
                       <Server className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <p className="font-medium">{selectedProduct.name} Hosting</p>
+                      <p className="font-medium">{selectedProduct.name}</p>
                       <p className="text-sm text-muted-foreground">
-                        {WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.label || "Monthly"} billing
+                        {billingCycleLabel}
                       </p>
-                      {WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.discount > 0 && (
-                        <Badge variant="secondary" className="mt-1 text-xs">
-                          <Tag className="h-3 w-3 mr-1" />
-                          {WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles].discount}% off
-                        </Badge>
-                      )}
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">${hostingPrice.toFixed(2)}</p>
+                    <p className="font-semibold">{formatPrice(hostingPrice)}</p>
                     <p className="text-xs text-muted-foreground">
-                      ${(hostingPrice / (WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles]?.months || 1)).toFixed(2)}/mo
+                      ≈ {formatPrice(Math.round(hostingPrice / billingMonths))}/mo
                     </p>
                   </div>
                 </div>
@@ -572,7 +587,10 @@ export default function OrderHosting() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">${totalPrice.toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-primary">
+                    {formatPrice(totalPrice)}
+                    {domainPrice > 0 && <span className="text-sm font-normal text-muted-foreground"> + ${domainPrice.toFixed(2)}</span>}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -591,7 +609,7 @@ export default function OrderHosting() {
               onValueChange={setPaymentMethod}
               className="grid gap-4 md:grid-cols-2"
             >
-{WHMCS_CONFIG.paymentMethods.map((method) => {
+              {WHMCS_CONFIG.paymentMethods.map((method) => {
                 const Icon = CreditCard;
                 const isSelected = paymentMethod === method.id;
 
@@ -631,7 +649,7 @@ export default function OrderHosting() {
                 <div className="text-right space-y-1">
                   {selectedProduct && (
                     <p className="text-sm text-muted-foreground">
-                      Hosting: ${hostingPrice.toFixed(2)}
+                      Hosting: {formatPrice(hostingPrice)}
                     </p>
                   )}
                   {domainPrice > 0 && (
@@ -639,7 +657,7 @@ export default function OrderHosting() {
                       Domain: ${domainPrice.toFixed(2)}/yr
                     </p>
                   )}
-                  <p className="text-xl font-bold">${totalPrice.toFixed(2)}</p>
+                  <p className="text-xl font-bold">{formatPrice(totalPrice)}</p>
                 </div>
               )}
               <Button
