@@ -158,8 +158,13 @@ export default function DomainRegister() {
         registrant: formData,
       });
 
+      console.log("Domain registration result:", result);
+
       if (result.result === "success" && result.pay_url) {
         window.location.href = result.pay_url;
+      } else if (result.result === "success" && result.invoiceid) {
+        // Redirect to invoice payment page
+        window.location.href = `https://billing.vintechdev.store/viewinvoice.php?id=${result.invoiceid}`;
       } else if (result.result === "success") {
         toast({
           title: "Domain Registered!",
@@ -167,11 +172,20 @@ export default function DomainRegister() {
         });
         navigate("/domains");
       } else {
-        throw new Error(result.message || result.error || "Registration failed");
+        // Show error message instead of redirecting
+        toast({
+          title: "Registration Failed",
+          description: result.message || result.error || "Unable to register domain. Please try again.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
-      // Redirect to WHMCS for actual registration
-      window.location.href = `https://billing.vintechdev.store/cart.php?a=add&domain=register&query=${encodeURIComponent(domain)}`;
+      console.error("Domain registration error:", error);
+      toast({
+        title: "Registration Error",
+        description: error instanceof Error ? error.message : "An unexpected error occurred.",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }
