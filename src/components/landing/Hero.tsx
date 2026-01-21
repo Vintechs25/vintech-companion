@@ -23,16 +23,16 @@ const Hero = () => {
             Enterprise-grade infrastructure
           </div>
 
-          {/* Main Headline - Vercel style */}
+          {/* Main Headline */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-semibold tracking-tight mb-6 leading-[1.1]">
-            Deploy your website
+            Premium Web Hosting
             <br />
-            <span className="text-muted-foreground">with blazing fast hosting</span>
+            <span className="text-gradient">Made Simple</span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-            NVMe storage, automatic SSL, daily backups, and 24/7 expert support. Starting at $4.99/month.
+          <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
+            Launch your website on blazing-fast NVMe servers with free SSL, automatic backups, and expert support — starting at just <strong className="text-foreground">$4.99/mo</strong>.
           </p>
 
           {/* CTAs */}
