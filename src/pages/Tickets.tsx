@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ticketsApi, type Ticket } from "@/lib/api";
+import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +29,7 @@ export default function Tickets() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [department, setDepartment] = useState("technical");
-  const [priority, setPriority] = useState("medium");
+  const [priority, setPriority] = useState("Medium");
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -52,17 +53,27 @@ export default function Tickets() {
     if (!user?.userid || !subject || !message) return;
     setSubmitting(true);
     try {
-      await ticketsApi.open(user.userid, subject, message, department, priority);
-      toast({ title: "Ticket Created", description: "Your support ticket has been submitted." });
-      setDialogOpen(false);
-      setSubject("");
-      setMessage("");
-      setDepartment("technical");
-      setPriority("medium");
-      const data = await ticketsApi.getAll(user.userid);
-      setTickets(Array.isArray(data) ? data : []);
+      // Pass department key - API will map to numeric ID
+      const response = await ticketsApi.open(user.userid, subject, message, department, priority);
+      
+      if (response.result === "success") {
+        toast({ title: "Ticket Created", description: "Your support ticket has been submitted." });
+        setDialogOpen(false);
+        setSubject("");
+        setMessage("");
+        setDepartment("technical");
+        setPriority("Medium");
+        const data = await ticketsApi.getAll(user.userid);
+        setTickets(Array.isArray(data) ? data : []);
+      } else {
+        throw new Error(response.message || response.error || "Failed to create ticket");
+      }
     } catch (err) {
-      toast({ title: "Error", description: "Failed to create ticket", variant: "destructive" });
+      toast({ 
+        title: "Error", 
+        description: err instanceof Error ? err.message : "Failed to create ticket", 
+        variant: "destructive" 
+      });
     } finally {
       setSubmitting(false);
     }
@@ -141,9 +152,11 @@ export default function Tickets() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sales">Sales</SelectItem>
-                      <SelectItem value="technical">Technical Support</SelectItem>
-                      <SelectItem value="billing">Billing</SelectItem>
+                      {Object.entries(WHMCS_CONFIG.departments).map(([key, dept]) => (
+                        <SelectItem key={key} value={key}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -154,9 +167,11 @@ export default function Tickets() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="low">Low</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="high">High</SelectItem>
+                      {WHMCS_CONFIG.priorities.map((p) => (
+                        <SelectItem key={p} value={p}>
+                          {p}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { orderApi } from "@/lib/api";
+import { WHMCS_CONFIG, calculatePrice, formatBillingCyclePrice } from "@/lib/whmcs-config";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Server,
   Check,
@@ -22,64 +24,17 @@ import {
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
-const paymentMethods = [
-  { id: "paypal", name: "PayPal", icon: Wallet, description: "Pay securely with PayPal" },
-  { id: "stripe", name: "Credit Card", icon: CreditCard, description: "Visa, Mastercard, Amex" },
-];
-
-const plans = [
-  {
-    id: "basic",
-    name: "Basic",
-    price: 4.99,
-    icon: Server,
-    features: [
-      "5 GB SSD Storage",
-      "1 Website",
-      "Free SSL Certificate",
-      "Weekly Backups",
-      "Email Support",
-    ],
-    popular: false,
-  },
-  {
-    id: "pro",
-    name: "Professional",
-    price: 9.99,
-    icon: Rocket,
-    features: [
-      "25 GB NVMe Storage",
-      "Unlimited Websites",
-      "Free SSL Certificates",
-      "Daily Backups",
-      "Priority Support",
-      "Free Domain",
-    ],
-    popular: true,
-  },
-  {
-    id: "enterprise",
-    name: "Enterprise",
-    price: 24.99,
-    icon: Building,
-    features: [
-      "100 GB NVMe Storage",
-      "Unlimited Websites",
-      "Free SSL Certificates",
-      "Real-time Backups",
-      "24/7 Phone Support",
-      "Free Domain",
-      "Dedicated IP",
-      "Advanced Security",
-    ],
-    popular: false,
-  },
-];
+const planIcons = {
+  basic: Server,
+  pro: Rocket,
+  enterprise: Building,
+};
 
 export default function OrderHosting() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [billingCycle, setBillingCycle] = useState("monthly");
   const [domain, setDomain] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("paypal");
   const [isLoading, setIsLoading] = useState(false);
@@ -100,6 +55,13 @@ export default function OrderHosting() {
 
     if (!user?.userid) {
       setError("Please log in to continue");
+      navigate("/login?redirect=/hosting/order");
+      return;
+    }
+
+    const product = WHMCS_CONFIG.products[selectedPlan as keyof typeof WHMCS_CONFIG.products];
+    if (!product) {
+      setError("Invalid plan selected");
       return;
     }
 
@@ -109,13 +71,15 @@ export default function OrderHosting() {
     try {
       const response = await orderApi.create({
         userid: user.userid,
-        product: selectedPlan,
-        domain: domain,
+        pid: product.pid, // Numeric WHMCS product ID
+        domain: domain.trim().toLowerCase(),
+        billingcycle: billingCycle,
         paymentmethod: paymentMethod,
       });
 
       if (response.result === "success") {
         if (response.pay_url) {
+          // Redirect to payment page
           window.location.href = response.pay_url;
         } else {
           toast({
@@ -133,6 +97,14 @@ export default function OrderHosting() {
       setIsLoading(false);
     }
   };
+
+  const selectedProduct = selectedPlan 
+    ? WHMCS_CONFIG.products[selectedPlan as keyof typeof WHMCS_CONFIG.products] 
+    : null;
+
+  const totalPrice = selectedProduct 
+    ? calculatePrice(selectedProduct.monthlyPrice, billingCycle) 
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -154,21 +126,22 @@ export default function OrderHosting() {
       <form onSubmit={handleOrder}>
         {/* Plans */}
         <div className="grid gap-6 md:grid-cols-3 mb-8">
-          {plans.map((plan) => {
-            const Icon = plan.icon;
-            const isSelected = selectedPlan === plan.id;
+          {Object.entries(WHMCS_CONFIG.products).map(([key, plan]) => {
+            const Icon = planIcons[key as keyof typeof planIcons] || Server;
+            const isSelected = selectedPlan === key;
+            const isPro = key === "pro";
             
             return (
               <Card
-                key={plan.id}
+                key={key}
                 className={`cursor-pointer transition-all hover:shadow-lg ${
                   isSelected
                     ? "ring-2 ring-primary shadow-lg"
                     : "hover:border-primary/50"
-                } ${plan.popular ? "relative" : ""}`}
-                onClick={() => setSelectedPlan(plan.id)}
+                } ${isPro ? "relative" : ""}`}
+                onClick={() => setSelectedPlan(key)}
               >
-                {plan.popular && (
+                {isPro && (
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 gradient-primary border-0">
                     <Zap className="h-3 w-3 mr-1" />
                     Most Popular
@@ -183,7 +156,7 @@ export default function OrderHosting() {
                   <CardTitle>{plan.name}</CardTitle>
                   <CardDescription>
                     <span className="text-3xl font-bold text-foreground">
-                      ${plan.price}
+                      ${plan.monthlyPrice}
                     </span>
                     <span className="text-muted-foreground">/month</span>
                   </CardDescription>
@@ -203,7 +176,7 @@ export default function OrderHosting() {
                     type="button"
                     variant={isSelected ? "default" : "outline"}
                     className={`w-full ${isSelected ? "gradient-primary" : ""}`}
-                    onClick={() => setSelectedPlan(plan.id)}
+                    onClick={() => setSelectedPlan(key)}
                   >
                     {isSelected ? "Selected" : "Select Plan"}
                   </Button>
@@ -212,6 +185,38 @@ export default function OrderHosting() {
             );
           })}
         </div>
+
+        {/* Billing Cycle */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Billing Cycle</CardTitle>
+            <CardDescription>
+              Save more with longer billing periods
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={billingCycle} onValueChange={setBillingCycle}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(WHMCS_CONFIG.billingCycles).map(([key, cycle]) => (
+                  <SelectItem key={key} value={key}>
+                    {cycle.label}
+                    {cycle.discount > 0 && (
+                      <span className="ml-2 text-primary">Save {cycle.discount}%</span>
+                    )}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {selectedProduct && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Total: {formatBillingCyclePrice(selectedProduct.monthlyPrice, billingCycle)}
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Domain Input */}
         <Card className="mb-6">
@@ -251,8 +256,8 @@ export default function OrderHosting() {
               onValueChange={setPaymentMethod}
               className="grid gap-4 md:grid-cols-2"
             >
-              {paymentMethods.map((method) => {
-                const Icon = method.icon;
+              {WHMCS_CONFIG.paymentMethods.map((method) => {
+                const Icon = method.id === "paypal" ? Wallet : CreditCard;
                 const isSelected = paymentMethod === method.id;
 
                 return (
@@ -280,27 +285,37 @@ export default function OrderHosting() {
               })}
             </RadioGroup>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button type="button" variant="outline" onClick={() => navigate("/hosting")}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              className="gradient-primary hover:opacity-90"
-              disabled={isLoading || !selectedPlan || !domain}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  Continue to Checkout
-                  <Rocket className="h-4 w-4 ml-2" />
-                </>
+          <CardFooter className="flex justify-between items-center">
+            <div>
+              <Button type="button" variant="outline" onClick={() => navigate("/hosting")}>
+                Cancel
+              </Button>
+            </div>
+            <div className="flex items-center gap-4">
+              {selectedProduct && (
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-xl font-bold">${totalPrice.toFixed(2)}</p>
+                </div>
               )}
-            </Button>
+              <Button
+                type="submit"
+                className="gradient-primary hover:opacity-90"
+                disabled={isLoading || !selectedPlan || !domain}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    Continue to Checkout
+                    <Rocket className="h-4 w-4 ml-2" />
+                  </>
+                )}
+              </Button>
+            </div>
           </CardFooter>
         </Card>
       </form>
