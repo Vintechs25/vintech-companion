@@ -223,15 +223,21 @@ export const authApi = {
   },
 };
 
+// Helper to normalize WHMCS array responses (single item = object, multiple = array)
+function normalizeWhmcsArray<T>(data: T | T[] | undefined): T[] {
+  if (!data) return [];
+  return Array.isArray(data) ? data : [data];
+}
+
 // ============= Dashboard API =============
 export const dashboardApi = {
   get: async (userid: number): Promise<DashboardData> => {
     const [clientDetails, products, domains, invoices, tickets] = await Promise.all([
       whmcsRequest<{ client?: { firstname: string; lastname: string; email: string } }>("GetClientsDetails", { clientid: userid }),
-      whmcsRequest<{ products?: { product: Service[] } }>("GetClientsProducts", { clientid: userid }),
-      whmcsRequest<{ domains?: { domain: Domain[] } }>("GetClientsDomains", { clientid: userid }),
-      whmcsRequest<{ invoices?: { invoice: Invoice[] } }>("GetInvoices", { userid }),
-      whmcsRequest<{ tickets?: { ticket: Ticket[] } }>("GetTickets", { clientid: userid }),
+      whmcsRequest<{ products?: { product: Service | Service[] } }>("GetClientsProducts", { clientid: userid }),
+      whmcsRequest<{ domains?: { domain: Domain | Domain[] } }>("GetClientsDomains", { clientid: userid }),
+      whmcsRequest<{ invoices?: { invoice: Invoice | Invoice[] } }>("GetInvoices", { userid }),
+      whmcsRequest<{ tickets?: { ticket: Ticket | Ticket[] } }>("GetTickets", { clientid: userid }),
     ]);
 
     return {
@@ -240,10 +246,10 @@ export const dashboardApi = {
         lastname: clientDetails.client?.lastname || "",
         email: clientDetails.client?.email || "",
       },
-      services: clientDetails && products.products?.product ? products.products.product : [],
-      domains: domains.domains?.domain || [],
-      invoices: invoices.invoices?.invoice || [],
-      tickets: tickets.tickets?.ticket || [],
+      services: normalizeWhmcsArray(products.products?.product),
+      domains: normalizeWhmcsArray(domains.domains?.domain),
+      invoices: normalizeWhmcsArray(invoices.invoices?.invoice),
+      tickets: normalizeWhmcsArray(tickets.tickets?.ticket),
     };
   },
 };
@@ -251,8 +257,8 @@ export const dashboardApi = {
 // ============= Services API =============
 export const servicesApi = {
   getAll: async (userid: number): Promise<Service[]> => {
-    const response = await whmcsRequest<{ products?: { product: Service[] } }>("GetClientsProducts", { clientid: userid });
-    return response.products?.product || [];
+    const response = await whmcsRequest<{ products?: { product: Service | Service[] } }>("GetClientsProducts", { clientid: userid });
+    return normalizeWhmcsArray(response.products?.product);
   },
 
   getOne: async (id: number): Promise<Service> => {
@@ -353,8 +359,8 @@ export const orderApi = {
 // ============= Invoices API =============
 export const invoicesApi = {
   getAll: async (userid: number): Promise<Invoice[]> => {
-    const response = await whmcsRequest<{ invoices?: { invoice: Invoice[] } }>("GetInvoices", { userid });
-    const invoices = response.invoices?.invoice || [];
+    const response = await whmcsRequest<{ invoices?: { invoice: Invoice | Invoice[] } }>("GetInvoices", { userid });
+    const invoices = normalizeWhmcsArray(response.invoices?.invoice);
     
     // Add payment URLs for unpaid invoices
     return invoices.map(invoice => ({
@@ -434,12 +440,7 @@ export const domainsApi = {
       numreturned?: number;
     }>("GetClientsDomains", { clientid: userid });
     
-    // WHMCS returns a single object when there's only 1 domain, array when multiple
-    const domainData = response.domains?.domain;
-    if (!domainData) return [];
-    
-    // Normalize to array
-    return Array.isArray(domainData) ? domainData : [domainData];
+    return normalizeWhmcsArray(response.domains?.domain);
   },
 
   search: async (domain: string): Promise<DomainSearchResult[]> => {
@@ -573,8 +574,8 @@ export const domainsApi = {
 // ============= Tickets API =============
 export const ticketsApi = {
   getAll: async (userid: number): Promise<Ticket[]> => {
-    const response = await whmcsRequest<{ tickets?: { ticket: Ticket[] } }>("GetTickets", { clientid: userid });
-    return response.tickets?.ticket || [];
+    const response = await whmcsRequest<{ tickets?: { ticket: Ticket | Ticket[] } }>("GetTickets", { clientid: userid });
+    return normalizeWhmcsArray(response.tickets?.ticket);
   },
 
   getOne: async (ticketId: number): Promise<TicketDetail> => {
