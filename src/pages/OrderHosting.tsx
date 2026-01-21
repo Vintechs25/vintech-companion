@@ -36,7 +36,7 @@ export default function OrderHosting() {
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState("monthly");
   const [domain, setDomain] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("paypal");
+  const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -256,8 +256,8 @@ export default function OrderHosting() {
               onValueChange={setPaymentMethod}
               className="grid gap-4 md:grid-cols-2"
             >
-              {WHMCS_CONFIG.paymentMethods.map((method) => {
-                const Icon = method.id === "paypal" ? Wallet : CreditCard;
+{WHMCS_CONFIG.paymentMethods.map((method) => {
+                const Icon = CreditCard;
                 const isSelected = paymentMethod === method.id;
 
                 return (

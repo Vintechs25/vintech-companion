@@ -29,7 +29,7 @@ export default function DomainTransfer() {
   
   const [domain, setDomain] = useState("");
   const [eppCode, setEppCode] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState("paypal");
+  const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -155,8 +155,8 @@ export default function DomainTransfer() {
                       onValueChange={setPaymentMethod}
                       className="grid grid-cols-2 gap-4"
                     >
-                      {WHMCS_CONFIG.paymentMethods.map((method) => {
-                        const Icon = method.id === "paypal" ? Wallet : CreditCard;
+{WHMCS_CONFIG.paymentMethods.map((method) => {
+                        const Icon = CreditCard;
                         const isSelected = paymentMethod === method.id;
 
                         return (
