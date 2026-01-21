@@ -55,7 +55,7 @@ export default function Domains() {
   }, [user?.userid]);
 
   const filteredDomains = domains.filter((domain) =>
-    domain.domain.toLowerCase().includes(searchQuery.toLowerCase())
+    domain.domain?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false
   );
 
   if (isLoading) {
