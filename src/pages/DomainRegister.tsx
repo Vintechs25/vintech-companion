@@ -87,11 +87,14 @@ export default function DomainRegister() {
   const { toast } = useToast();
   
   const domain = searchParams.get("domain") || "";
+  const tld = domain.split(".").slice(1).join("."); // Extract TLD (e.g., "store" from "example.store")
   
   const [years, setYears] = useState("1");
   const [privacy, setPrivacy] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState("paystack");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [tldPricing, setTldPricing] = useState<Record<string, number>>({});
+  const [isLoadingPrice, setIsLoadingPrice] = useState(true);
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
@@ -104,6 +107,44 @@ export default function DomainRegister() {
     country: "US",
   });
 
+  // Fetch TLD pricing from WHMCS
+  useEffect(() => {
+    const fetchPricing = async () => {
+      setIsLoadingPrice(true);
+      try {
+        const pricing = await domainsApi.getPricing();
+        const priceMap: Record<string, number> = {};
+        
+        // Parse pricing for each TLD
+        Object.entries(pricing).forEach(([tldKey, prices]) => {
+          if (prices && typeof prices === 'object') {
+            // WHMCS returns register prices as either a string or an object with year keys
+            const registerPrice = prices.register;
+            if (typeof registerPrice === 'string') {
+              priceMap[tldKey.toLowerCase()] = parseFloat(registerPrice);
+            } else if (typeof registerPrice === 'object' && registerPrice !== null) {
+              // If it's an object with year keys like { "1": "10.99", "2": "20.99" }
+              const yearPrice = (registerPrice as Record<string, string>)["1"] || 
+                               (registerPrice as Record<string, string>)["2"] || 
+                               Object.values(registerPrice)[0];
+              if (yearPrice) {
+                priceMap[tldKey.toLowerCase()] = parseFloat(yearPrice as string);
+              }
+            }
+          }
+        });
+        
+        setTldPricing(priceMap);
+      } catch (error) {
+        console.error("Failed to fetch TLD pricing:", error);
+      } finally {
+        setIsLoadingPrice(false);
+      }
+    };
+    
+    fetchPricing();
+  }, []);
+
   useEffect(() => {
     if (user) {
       setFormData((prev) => ({
@@ -113,7 +154,8 @@ export default function DomainRegister() {
     }
   }, [user]);
 
-  const basePrice = 1500; // KES
+  // Get price for the current TLD, fallback to 1500 KES
+  const basePrice = tldPricing[tld.toLowerCase()] || 1500;
   const yearCount = parseInt(years);
   const totalPrice = basePrice * yearCount;
 
@@ -388,7 +430,13 @@ export default function DomainRegister() {
                 <CardContent className="space-y-4">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">{domain}</span>
-                    <span>KES {basePrice.toLocaleString()}/yr</span>
+                    <span>
+                      {isLoadingPrice ? (
+                        <span className="text-muted-foreground">Loading...</span>
+                      ) : (
+                        `KES ${basePrice.toLocaleString()}/yr`
+                      )}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Period</span>
@@ -400,7 +448,13 @@ export default function DomainRegister() {
                   </div>
                   <div className="border-t pt-4 flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>KES {totalPrice.toLocaleString()}</span>
+                    <span>
+                      {isLoadingPrice ? (
+                        <span className="text-muted-foreground">Loading...</span>
+                      ) : (
+                        `KES ${totalPrice.toLocaleString()}`
+                      )}
+                    </span>
                   </div>
 
                   <div className="pt-4 space-y-2">
