@@ -122,6 +122,10 @@ interface OrderPayload {
   domain: string;
   billingcycle: string;
   paymentmethod: string;
+  // Optional domain registration fields
+  registerDomain?: boolean;
+  domainRegPeriod?: number;
+  idProtection?: boolean;
 }
 
 // Helper function for WHMCS API requests
@@ -309,13 +313,27 @@ export const servicesApi = {
 // ============= Order API =============
 export const orderApi = {
   create: async (payload: OrderPayload): Promise<ApiResponse> => {
-    const response = await whmcsRequest<ApiResponse>("AddOrder", {
+    // Build order params - WHMCS AddOrder supports both products and domains
+    const orderParams: Record<string, unknown> = {
       clientid: payload.userid,
-      pid: payload.pid,
-      domain: payload.domain,
-      billingcycle: payload.billingcycle,
       paymentmethod: payload.paymentmethod,
-    });
+    };
+
+    // Add hosting product using array notation for WHMCS
+    orderParams["pid[0]"] = payload.pid;
+    orderParams["domain[0]"] = payload.domain;
+    orderParams["billingcycle[0]"] = payload.billingcycle;
+
+    // If registering a new domain, add domain registration to the same order
+    if (payload.registerDomain) {
+      orderParams["domaintype[0]"] = "register";
+      orderParams["regperiod[0]"] = payload.domainRegPeriod || 1;
+      if (payload.idProtection) {
+        orderParams["idprotection[0]"] = 1;
+      }
+    }
+
+    const response = await whmcsRequest<ApiResponse>("AddOrder", orderParams);
 
     // Add payment URL if invoice was created
     if (response.result === "success" && response.invoiceid) {

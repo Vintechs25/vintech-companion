@@ -99,6 +99,12 @@ export default function OrderHosting() {
       return;
     }
 
+    // Validate domain selection for new registration
+    if (domainOption === "register" && !selectedDomainResult) {
+      setError("Please check domain availability and select an available domain");
+      return;
+    }
+
     if (!user?.userid) {
       setError("Please log in to continue");
       navigate("/login?redirect=/hosting/order");
@@ -117,10 +123,14 @@ export default function OrderHosting() {
     try {
       const response = await orderApi.create({
         userid: user.userid,
-        pid: product.pid, // Numeric WHMCS product ID
+        pid: product.pid,
         domain: domain.trim().toLowerCase(),
         billingcycle: billingCycle,
         paymentmethod: paymentMethod,
+        // Bundle domain registration if user chose to register a new domain
+        registerDomain: domainOption === "register" && !!selectedDomainResult,
+        domainRegPeriod: 1,
+        idProtection: true, // Include WHOIS privacy by default
       });
 
       if (response.result === "success") {
@@ -148,9 +158,15 @@ export default function OrderHosting() {
     ? WHMCS_CONFIG.products[selectedPlan as keyof typeof WHMCS_CONFIG.products] 
     : null;
 
-  const totalPrice = selectedProduct 
+  const hostingPrice = selectedProduct 
     ? calculatePrice(selectedProduct.monthlyPrice, billingCycle) 
     : 0;
+
+  const domainPrice = domainOption === "register" && selectedDomainResult 
+    ? parseFloat(selectedDomainResult.price) 
+    : 0;
+
+  const totalPrice = hostingPrice + domainPrice;
 
   return (
     <div className="space-y-6">
@@ -493,16 +509,30 @@ export default function OrderHosting() {
               </Button>
             </div>
             <div className="flex items-center gap-4">
-              {selectedProduct && (
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">Total</p>
+              {(selectedProduct || domainPrice > 0) && (
+                <div className="text-right space-y-1">
+                  {selectedProduct && (
+                    <p className="text-sm text-muted-foreground">
+                      Hosting: ${hostingPrice.toFixed(2)}
+                    </p>
+                  )}
+                  {domainPrice > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Domain: ${domainPrice.toFixed(2)}/yr
+                    </p>
+                  )}
                   <p className="text-xl font-bold">${totalPrice.toFixed(2)}</p>
                 </div>
               )}
               <Button
                 type="submit"
                 className="gradient-primary hover:opacity-90"
-                disabled={isLoading || !selectedPlan || !domain}
+                disabled={
+                  isLoading || 
+                  !selectedPlan || 
+                  !domain || 
+                  (domainOption === "register" && !selectedDomainResult)
+                }
               >
                 {isLoading ? (
                   <>
