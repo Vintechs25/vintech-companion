@@ -5,3 +5,4 @@ export { ProjectsSection } from "./ProjectsSection";
 export { QuickActions } from "./QuickActions";
 export { ActivityFeed } from "./ActivityFeed";
 export { DashboardSkeleton } from "./DashboardSkeleton";
+export { ResourceMonitor } from "./ResourceMonitor";
