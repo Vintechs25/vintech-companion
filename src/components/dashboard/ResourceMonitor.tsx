@@ -2,10 +2,8 @@ import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import type { Service } from "@/lib/api";
-import { useResourceMonitor } from "@/hooks/useResourceMonitor";
 import { 
   Server, 
   HardDrive, 
@@ -15,8 +13,6 @@ import {
   Wifi,
   Cpu,
   MemoryStick,
-  RefreshCw,
-  AlertCircle
 } from "lucide-react";
 
 interface ResourceMonitorProps {
@@ -30,7 +26,7 @@ interface ResourceUsage {
   memory: number;
 }
 
-// Fallback simulated usage based on service ID for consistency
+// Simulated usage based on service ID for consistency
 function getSimulatedUsage(serviceId: number): ResourceUsage {
   const seed = serviceId * 7919;
   
@@ -85,28 +81,11 @@ function getTextColor(level: "low" | "medium" | "high" | "critical"): string {
 interface ServiceResourceCardProps {
   service: Service;
   index: number;
-  realStats?: { diskUsed: number; bandwidthUsed: number } | null;
-  serverStats?: { cpu: number; memory: number } | null;
 }
 
-function ServiceResourceCard({ service, index, realStats, serverStats }: ServiceResourceCardProps) {
+function ServiceResourceCard({ service, index }: ServiceResourceCardProps) {
   const isActive = service.status.toLowerCase() === "active";
-  
-  // Use real stats if available, otherwise fallback to simulated
-  const simulatedUsage = getSimulatedUsage(service.id);
-  
-  const usage: ResourceUsage = realStats ? {
-    storage: { 
-      used: realStats.diskUsed / 1024, // Convert MB to GB
-      total: simulatedUsage.storage.total 
-    },
-    bandwidth: { 
-      used: realStats.bandwidthUsed / 1024, // Convert MB to GB
-      total: simulatedUsage.bandwidth.total 
-    },
-    cpu: serverStats?.cpu ?? simulatedUsage.cpu,
-    memory: serverStats?.memory ?? simulatedUsage.memory,
-  } : simulatedUsage;
+  const usage = getSimulatedUsage(service.id);
   
   const storagePercent = Math.min((usage.storage.used / usage.storage.total) * 100, 100);
   const bandwidthPercent = Math.min((usage.bandwidth.used / usage.bandwidth.total) * 100, 100);
@@ -136,13 +115,8 @@ function ServiceResourceCard({ service, index, realStats, serverStats }: Service
               <CardTitle className="text-sm font-semibold line-clamp-1">
                 {service.domain}
               </CardTitle>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <p className="text-xs text-muted-foreground">
                 {service.product || "Web Hosting"}
-                {realStats && (
-                  <Badge variant="outline" className="text-[8px] px-1 py-0 ml-1 border-success/50 text-success">
-                    LIVE
-                  </Badge>
-                )}
               </p>
             </div>
           </div>
@@ -243,16 +217,12 @@ function ServiceResourceCard({ service, index, realStats, serverStats }: Service
 
 interface ResourceSummaryCardProps {
   services: Service[];
-  serverStats?: { cpu: number; memory: number; disk: number } | null;
-  isLoading?: boolean;
-  lastUpdated?: Date | null;
-  onRefresh?: () => void;
 }
 
-function ResourceSummaryCard({ services, serverStats, isLoading, lastUpdated, onRefresh }: ResourceSummaryCardProps) {
+function ResourceSummaryCard({ services }: ResourceSummaryCardProps) {
   const activeServices = services.filter(s => s.status.toLowerCase() === "active");
   
-  // Calculate aggregate stats using simulated data for now
+  // Calculate aggregate stats using simulated data
   const totalStats = activeServices.reduce((acc, service) => {
     const usage = getSimulatedUsage(service.id);
     return {
@@ -263,47 +233,26 @@ function ResourceSummaryCard({ services, serverStats, isLoading, lastUpdated, on
     };
   }, { storageUsed: 0, storageTotal: 0, bandwidthUsed: 0, bandwidthTotal: 0 });
 
-  const cpu = serverStats?.cpu ?? (activeServices.length ? 
-    Math.round(activeServices.reduce((sum, s) => sum + getSimulatedUsage(s.id).cpu, 0) / activeServices.length) : 0);
-  const memory = serverStats?.memory ?? (activeServices.length ? 
-    Math.round(activeServices.reduce((sum, s) => sum + getSimulatedUsage(s.id).memory, 0) / activeServices.length) : 0);
+  const cpu = activeServices.length ? 
+    Math.round(activeServices.reduce((sum, s) => sum + getSimulatedUsage(s.id).cpu, 0) / activeServices.length) : 0;
+  const memory = activeServices.length ? 
+    Math.round(activeServices.reduce((sum, s) => sum + getSimulatedUsage(s.id).memory, 0) / activeServices.length) : 0;
 
   return (
     <Card className="bg-gradient-to-br from-primary/5 via-primary/10 to-transparent border-primary/20">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20">
-              <Activity className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                Server Resources
-                {serverStats && (
-                  <Badge variant="outline" className="text-[8px] px-1 py-0 border-success/50 text-success">
-                    LIVE
-                  </Badge>
-                )}
-              </CardTitle>
-              <p className="text-xs text-muted-foreground">
-                {lastUpdated 
-                  ? `Updated ${lastUpdated.toLocaleTimeString()}`
-                  : `${activeServices.length} active service${activeServices.length !== 1 ? "s" : ""}`
-                }
-              </p>
-            </div>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/20">
+            <Activity className="h-5 w-5 text-primary" />
           </div>
-          {onRefresh && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8" 
-              onClick={onRefresh}
-              disabled={isLoading}
-            >
-              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
-            </Button>
-          )}
+          <div>
+            <CardTitle className="text-base font-semibold">
+              Server Resources
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">
+              {activeServices.length} active service{activeServices.length !== 1 ? "s" : ""}
+            </p>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pt-2">
@@ -313,80 +262,40 @@ function ResourceSummaryCard({ services, serverStats, isLoading, lastUpdated, on
               <Database className="h-4 w-4 text-primary" />
               <span className="text-xs text-muted-foreground">Storage</span>
             </div>
-            {isLoading ? (
-              <Skeleton className="h-7 w-20" />
-            ) : (
-              <>
-                <p className="text-lg font-bold tabular-nums">
-                  {totalStats.storageUsed.toFixed(1)} GB
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  of {totalStats.storageTotal} GB
-                </p>
-              </>
-            )}
+            <p className="text-lg font-bold tabular-nums">
+              {totalStats.storageUsed.toFixed(1)} GB
+            </p>
+            <p className="text-xs text-muted-foreground">
+              of {totalStats.storageTotal} GB
+            </p>
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Wifi className="h-4 w-4 text-primary" />
               <span className="text-xs text-muted-foreground">Bandwidth</span>
             </div>
-            {isLoading ? (
-              <Skeleton className="h-7 w-20" />
-            ) : (
-              <>
-                <p className="text-lg font-bold tabular-nums">
-                  {totalStats.bandwidthUsed.toFixed(1)} GB
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  of {totalStats.bandwidthTotal} GB
-                </p>
-              </>
-            )}
+            <p className="text-lg font-bold tabular-nums">
+              {totalStats.bandwidthUsed.toFixed(1)} GB
+            </p>
+            <p className="text-xs text-muted-foreground">
+              of {totalStats.bandwidthTotal} GB
+            </p>
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Cpu className={cn("h-4 w-4", getTextColor(getUsageLevel(cpu)))} />
               <span className="text-xs text-muted-foreground">CPU</span>
             </div>
-            {isLoading ? (
-              <Skeleton className="h-7 w-14" />
-            ) : (
-              <p className="text-lg font-bold tabular-nums">{cpu}%</p>
-            )}
+            <p className="text-lg font-bold tabular-nums">{cpu}%</p>
           </div>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <MemoryStick className={cn("h-4 w-4", getTextColor(getUsageLevel(memory)))} />
               <span className="text-xs text-muted-foreground">RAM</span>
             </div>
-            {isLoading ? (
-              <Skeleton className="h-7 w-14" />
-            ) : (
-              <p className="text-lg font-bold tabular-nums">{memory}%</p>
-            )}
+            <p className="text-lg font-bold tabular-nums">{memory}%</p>
           </div>
         </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ResourceErrorCard({ error, onRetry }: { error: string; onRetry: () => void }) {
-  return (
-    <Card className="border-warning/30 bg-warning/5">
-      <CardContent className="flex items-center gap-4 py-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/20">
-          <AlertCircle className="h-5 w-5 text-warning" />
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-medium">Unable to fetch live stats</p>
-          <p className="text-xs text-muted-foreground">Using estimated values</p>
-        </div>
-        <Button variant="outline" size="sm" onClick={onRetry}>
-          <RefreshCw className="h-4 w-4 mr-1" />
-          Retry
-        </Button>
       </CardContent>
     </Card>
   );
@@ -394,21 +303,6 @@ function ResourceErrorCard({ error, onRetry }: { error: string; onRetry: () => v
 
 export function ResourceMonitor({ services }: ResourceMonitorProps) {
   const activeServices = services.filter(s => s.status.toLowerCase() === "active");
-  const domains = activeServices.map(s => s.domain);
-
-  const { 
-    stats, 
-    isLoading, 
-    error, 
-    lastUpdated, 
-    refresh,
-    getWebsiteStats,
-    serverStats 
-  } = useResourceMonitor({
-    domains,
-    refreshInterval: 60000, // Refresh every minute
-    enabled: activeServices.length > 0,
-  });
 
   if (activeServices.length === 0) {
     return null;
@@ -420,7 +314,7 @@ export function ResourceMonitor({ services }: ResourceMonitorProps) {
         <div>
           <h2 className="text-xl font-semibold">Resource Monitor</h2>
           <p className="text-sm text-muted-foreground">
-            {stats ? "Live data from CyberPanel" : "Real-time usage across your hosting services"}
+            Usage overview across your hosting services
           </p>
         </div>
         <Button variant="ghost" size="sm" className="gap-1" asChild>
@@ -431,33 +325,18 @@ export function ResourceMonitor({ services }: ResourceMonitorProps) {
         </Button>
       </div>
 
-      {error && !stats && (
-        <ResourceErrorCard error={error} onRetry={refresh} />
-      )}
-
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {/* Summary Card */}
-        <ResourceSummaryCard 
-          services={services}
-          serverStats={serverStats}
-          isLoading={isLoading}
-          lastUpdated={lastUpdated}
-          onRefresh={refresh}
-        />
+        <ResourceSummaryCard services={services} />
         
         {/* Individual Service Cards */}
-        {activeServices.slice(0, 3).map((service, index) => {
-          const websiteStats = getWebsiteStats(service.domain);
-          return (
-            <ServiceResourceCard 
-              key={service.id} 
-              service={service} 
-              index={index}
-              realStats={websiteStats}
-              serverStats={serverStats}
-            />
-          );
-        })}
+        {activeServices.slice(0, 3).map((service, index) => (
+          <ServiceResourceCard 
+            key={service.id} 
+            service={service} 
+            index={index}
+          />
+        ))}
       </div>
     </div>
   );
