@@ -22,8 +22,6 @@ import {
   ExternalLink,
   Key,
   Power,
-  RefreshCw,
-  Globe,
   Loader2,
   Database,
   Mail,
@@ -36,9 +34,11 @@ import {
   Copy,
   Check,
   Code,
+  Globe,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useCyberPanelSSO } from "@/hooks/useCyberPanelSSO";
 
 // Access detail row component
 function AccessRow({
@@ -156,6 +156,7 @@ function QuickLinkCard({
 export default function ServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { openCyberPanel, isLoading: ssoLoading } = useCyberPanelSSO();
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,6 +164,12 @@ export default function ServiceDetails() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+
+  const handleOpenCyberPanel = () => {
+    if (service?.panel_url) {
+      openCyberPanel(service.panel_url, service.username, service.domain);
+    }
+  };
 
   useEffect(() => {
     async function fetchService() {
@@ -329,15 +336,22 @@ export default function ServiceDetails() {
           </div>
         </div>
 
-        {/* Main CTA - Open CyberPanel */}
+        {/* Main CTA - Open CyberPanel with SSO */}
         <div className="flex items-center gap-2 ml-14 md:ml-0">
           {panelUrl && (
-            <Button asChild size="lg" className="gap-2">
-              <a href={panelUrl} target="_blank" rel="noopener noreferrer">
+            <Button 
+              size="lg" 
+              className="gap-2"
+              onClick={handleOpenCyberPanel}
+              disabled={ssoLoading}
+            >
+              {ssoLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
                 <Terminal className="h-4 w-4" />
-                Open CyberPanel
-                <ExternalLink className="h-3 w-3 ml-1" />
-              </a>
+              )}
+              Open CyberPanel
+              <ExternalLink className="h-3 w-3 ml-1" />
             </Button>
           )}
         </div>
@@ -490,12 +504,19 @@ export default function ServiceDetails() {
               )}
 
               {panelUrl && (
-                <Button variant="outline" className="w-full justify-start gap-2" asChild>
-                  <a href={panelUrl} target="_blank" rel="noopener noreferrer">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start gap-2"
+                  onClick={handleOpenCyberPanel}
+                  disabled={ssoLoading}
+                >
+                  {ssoLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
                     <Terminal className="h-4 w-4" />
-                    Full Management
-                    <ExternalLink className="h-3 w-3 ml-auto" />
-                  </a>
+                  )}
+                  Full Management
+                  <ExternalLink className="h-3 w-3 ml-auto" />
                 </Button>
               )}
             </CardContent>
