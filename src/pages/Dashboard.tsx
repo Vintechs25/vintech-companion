@@ -13,6 +13,7 @@ import { ProjectsSection } from "@/components/dashboard/ProjectsSection";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
+import { ResourceMonitor } from "@/components/dashboard/ResourceMonitor";
 
 interface DashboardData {
   user: { firstname: string; lastname: string; email: string };
@@ -100,6 +101,9 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <QuickActions />
+
+      {/* Resource Monitor */}
+      <ResourceMonitor services={services} />
 
       {/* Projects Section */}
       <ProjectsSection services={services} />
