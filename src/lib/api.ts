@@ -330,20 +330,30 @@ export const orderApi = {
     orderParams["domain[0]"] = payload.domain;
     orderParams["billingcycle[0]"] = payload.billingcycle;
 
-    // If registering a new domain, add domain registration separately
-    // Domain registration requires proper array indexing for domains
+    // CRITICAL: Only include domain registration params when actually registering
+    // If using an existing domain, do NOT include domaintype at all - WHMCS will 
+    // incorrectly try to validate TLD/regperiod even with domaintype=none
     if (payload.registerDomain) {
-      // For domain registration bundled with hosting, use separate domain array
+      // Extract TLD for validation
+      const domainParts = payload.domain.split(".");
+      const tld = domainParts.length > 1 ? domainParts.slice(1).join(".") : "";
+      
+      if (!tld) {
+        return {
+          result: "error",
+          message: "Invalid domain format - missing TLD",
+        };
+      }
+
+      // For domain registration bundled with hosting
       orderParams["domaintype[0]"] = "register";
-      // Use regperiod from payload, defaulting to what's valid for most TLDs
       orderParams["regperiod[0]"] = payload.domainRegPeriod || 1;
       if (payload.idProtection) {
         orderParams["idprotection[0]"] = 1;
       }
-    } else {
-      // For existing domains, don't include domain registration params
-      orderParams["domaintype[0]"] = "none";
     }
+    // NOTE: When NOT registering a domain, we deliberately omit domaintype 
+    // to prevent WHMCS from attempting TLD validation
 
     const response = await whmcsRequest<ApiResponse>("AddOrder", orderParams);
 
