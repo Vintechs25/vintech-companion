@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
@@ -21,6 +22,10 @@ import { CopyButton } from "@/components/shared/CopyButton";
 import { ViewToggle } from "@/components/shared/ViewToggle";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CountdownBadge } from "@/components/shared/CountdownBadge";
+import { QuickActionsMenu } from "@/components/shared/QuickActionsMenu";
+import { ServerHealthBar } from "@/components/shared/ServerHealthBar";
+import { useServerStats } from "@/hooks/useServerStats";
+import { cn } from "@/lib/utils";
 import {
   Server,
   Plus,
@@ -29,7 +34,163 @@ import {
   Settings,
   Globe,
   ArrowRight,
+  Activity,
 } from "lucide-react";
+
+// Project card with health indicators
+function ProjectCard({ service }: { service: Service }) {
+  const { stats, isLive } = useServerStats(service.ip);
+  const isActive = service.status.toLowerCase() === "active";
+
+  return (
+    <div className="group relative">
+      <Link to={`/hosting/${service.id}`}>
+        <Card className="h-full overflow-hidden border-border/50 transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:-translate-y-0.5">
+          <CardContent className="p-5">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-4">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className={cn(
+                  "h-10 w-10 rounded-lg flex items-center justify-center shrink-0",
+                  isActive ? "bg-success/10" : "bg-muted"
+                )}>
+                  <Server className={cn("h-5 w-5", isActive ? "text-success" : "text-muted-foreground")} />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-medium truncate text-sm group-hover:text-primary transition-colors">
+                    {service.domain}
+                  </h3>
+                  {service.product && (
+                    <p className="text-xs text-muted-foreground truncate">{service.product}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <StatusBadge status={service.status} size="sm" />
+              </div>
+            </div>
+
+            {/* Server Health */}
+            {isActive && stats && (
+              <div className="mb-4 p-3 rounded-lg bg-muted/30 border border-border/50">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Activity className="h-3 w-3" />
+                    Server Health
+                  </span>
+                  {isLive && (
+                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 bg-success/10 text-success border-success/30">
+                      LIVE
+                    </Badge>
+                  )}
+                </div>
+                <ServerHealthBar cpu={stats.cpu} ram={stats.ram} disk={stats.disk} />
+              </div>
+            )}
+
+            {/* Details */}
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground flex items-center gap-1.5">
+                  <Globe className="h-3.5 w-3.5" /> IP
+                </span>
+                <div className="flex items-center gap-1" onClick={(e) => e.preventDefault()}>
+                  <code className="text-xs font-mono text-foreground/80">{service.ip || "—"}</code>
+                  {service.ip && <CopyButton text={service.ip} className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />}
+                </div>
+              </div>
+              {service.nextduedate && (
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Renewal</span>
+                  <CountdownBadge date={service.nextduedate} />
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Click to manage</span>
+              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+      
+      {/* Quick Actions - positioned absolutely */}
+      <div className="absolute top-3 right-3 z-10">
+        <QuickActionsMenu service={service} />
+      </div>
+    </div>
+  );
+}
+
+// Table row with health indicators
+function ProjectTableRow({ service }: { service: Service }) {
+  const { stats, isLive } = useServerStats(service.ip);
+  const isActive = service.status.toLowerCase() === "active";
+
+  return (
+    <TableRow className="group">
+      <TableCell>
+        <div className="flex items-center gap-3">
+          <div className={cn(
+            "h-8 w-8 rounded-md flex items-center justify-center",
+            isActive ? "bg-success/10" : "bg-muted"
+          )}>
+            <Server className={cn("h-4 w-4", isActive ? "text-success" : "text-muted-foreground")} />
+          </div>
+          <div>
+            <p className="font-medium text-sm">{service.domain}</p>
+            {service.product && (
+              <p className="text-xs text-muted-foreground">{service.product}</p>
+            )}
+          </div>
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <code className="text-xs font-mono">{service.ip || "—"}</code>
+          {service.ip && <CopyButton text={service.ip} className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />}
+        </div>
+      </TableCell>
+      <TableCell>
+        <StatusBadge status={service.status} size="sm" />
+      </TableCell>
+      <TableCell>
+        {isActive && stats ? (
+          <div className="flex items-center gap-2">
+            <ServerHealthBar cpu={stats.cpu} ram={stats.ram} disk={stats.disk} compact />
+            {isLive && (
+              <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-success/10 text-success border-success/30">
+                LIVE
+              </Badge>
+            )}
+          </div>
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        )}
+      </TableCell>
+      <TableCell>
+        {service.nextduedate ? (
+          <CountdownBadge date={service.nextduedate} />
+        ) : (
+          <span className="text-muted-foreground text-sm">—</span>
+        )}
+      </TableCell>
+      <TableCell className="text-right">
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/hosting/${service.id}`}>
+              <Settings className="h-4 w-4 mr-1" />
+              Manage
+            </Link>
+          </Button>
+          <QuickActionsMenu service={service} />
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 export default function MyHosting() {
   const { user } = useAuth();
@@ -94,6 +255,7 @@ export default function MyHosting() {
             <div key={i} className="rounded-lg border border-border bg-card p-6">
               <Skeleton className="h-5 w-3/4 mb-3" />
               <Skeleton className="h-4 w-1/2 mb-4" />
+              <Skeleton className="h-20 w-full mb-4" />
               <Skeleton className="h-9 w-full" />
             </div>
           ))}
@@ -191,56 +353,7 @@ export default function MyHosting() {
       ) : view === "grid" ? (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredServices.map((service) => (
-            <Link 
-              key={service.id} 
-              to={`/hosting/${service.id}`}
-              className="group"
-            >
-              <div className="rounded-lg border border-border bg-card p-5 transition-all duration-200 hover:border-foreground/20 hover:shadow-sm">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-10 w-10 rounded-lg bg-foreground/5 flex items-center justify-center shrink-0">
-                      <Server className="h-5 w-5 text-foreground/70" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-medium truncate text-sm">
-                        {service.domain}
-                      </h3>
-                      {service.product && (
-                        <p className="text-xs text-muted-foreground truncate">{service.product}</p>
-                      )}
-                    </div>
-                  </div>
-                  <StatusBadge status={service.status} size="sm" />
-                </div>
-
-                {/* Details */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground flex items-center gap-1.5">
-                      <Globe className="h-3.5 w-3.5" /> IP
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <code className="text-xs font-mono text-foreground/80">{service.ip || "—"}</code>
-                      {service.ip && <CopyButton text={service.ip} className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />}
-                    </div>
-                  </div>
-                  {service.nextduedate && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Renewal</span>
-                      <CountdownBadge date={service.nextduedate} />
-                    </div>
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div className="mt-4 pt-4 border-t border-border flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Click to manage</span>
-                  <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
-                </div>
-              </div>
-            </Link>
+            <ProjectCard key={service.id} service={service} />
           ))}
         </div>
       ) : (
@@ -251,51 +364,14 @@ export default function MyHosting() {
                 <TableHead className="font-medium">Project</TableHead>
                 <TableHead className="font-medium">IP Address</TableHead>
                 <TableHead className="font-medium">Status</TableHead>
+                <TableHead className="font-medium">Health</TableHead>
                 <TableHead className="font-medium">Renewal</TableHead>
                 <TableHead className="text-right font-medium">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredServices.map((service) => (
-                <TableRow key={service.id} className="group">
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="h-8 w-8 rounded-md bg-foreground/5 flex items-center justify-center">
-                        <Server className="h-4 w-4 text-foreground/70" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">{service.domain}</p>
-                        {service.product && (
-                          <p className="text-xs text-muted-foreground">{service.product}</p>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <code className="text-xs font-mono">{service.ip || "—"}</code>
-                      {service.ip && <CopyButton text={service.ip} className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity" />}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge status={service.status} size="sm" />
-                  </TableCell>
-                  <TableCell>
-                    {service.nextduedate ? (
-                      <CountdownBadge date={service.nextduedate} />
-                    ) : (
-                      <span className="text-muted-foreground text-sm">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                      <Link to={`/hosting/${service.id}`}>
-                        <Settings className="h-4 w-4 mr-1" />
-                        Manage
-                      </Link>
-                    </Button>
-                  </TableCell>
-                </TableRow>
+                <ProjectTableRow key={service.id} service={service} />
               ))}
             </TableBody>
           </Table>
