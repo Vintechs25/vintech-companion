@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import {
   LayoutGrid,
   Server,
@@ -37,7 +45,7 @@ import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/shared/NotificationBell";
 import { QuickLaunchDropdown } from "@/components/shared/QuickLaunchDropdown";
 
-// DigitalOcean-style navigation items
+// Navigation items
 const navItems = [
   { title: "Overview", url: "/dashboard", icon: LayoutGrid },
   { title: "Projects", url: "/hosting", icon: Server },
@@ -46,7 +54,20 @@ const navItems = [
   { title: "Support", url: "/tickets", icon: MessageCircle },
 ];
 
-// Sidebar component with icon-based navigation
+// Breadcrumb configuration
+const breadcrumbConfig: Record<string, { label: string; parent?: string }> = {
+  "/dashboard": { label: "Dashboard" },
+  "/hosting": { label: "Projects", parent: "/dashboard" },
+  "/domains": { label: "Domains", parent: "/dashboard" },
+  "/invoices": { label: "Billing", parent: "/dashboard" },
+  "/tickets": { label: "Support", parent: "/dashboard" },
+  "/settings": { label: "Settings", parent: "/dashboard" },
+  "/order": { label: "New Project", parent: "/hosting" },
+  "/domains/search": { label: "Search", parent: "/domains" },
+  "/domains/transfer": { label: "Transfer", parent: "/domains" },
+};
+
+// Sidebar component
 function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   const location = useLocation();
 
@@ -166,7 +187,68 @@ function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => 
   );
 }
 
-// Top header with user profile and billing
+// Dynamic breadcrumbs
+function DynamicBreadcrumbs() {
+  const location = useLocation();
+  const params = useParams();
+  
+  // Build breadcrumb trail
+  const getBreadcrumbs = () => {
+    const path = location.pathname;
+    const crumbs: Array<{ label: string; href?: string }> = [];
+    
+    // Handle dynamic routes
+    if (path.startsWith("/hosting/") && params.id) {
+      crumbs.push({ label: "Projects", href: "/hosting" });
+      crumbs.push({ label: `Service #${params.id}` });
+    } else if (path.startsWith("/invoices/") && params.id) {
+      crumbs.push({ label: "Billing", href: "/invoices" });
+      crumbs.push({ label: `Invoice #${params.id}` });
+    } else if (path.startsWith("/tickets/") && params.id) {
+      crumbs.push({ label: "Support", href: "/tickets" });
+      crumbs.push({ label: `Ticket #${params.id}` });
+    } else if (breadcrumbConfig[path]) {
+      const config = breadcrumbConfig[path];
+      if (config.parent && breadcrumbConfig[config.parent]) {
+        crumbs.push({ label: breadcrumbConfig[config.parent].label, href: config.parent });
+      }
+      crumbs.push({ label: config.label });
+    } else {
+      crumbs.push({ label: "Dashboard" });
+    }
+    
+    return crumbs;
+  };
+
+  const crumbs = getBreadcrumbs();
+
+  if (crumbs.length <= 1) {
+    return <span className="text-sm text-muted-foreground">{crumbs[0]?.label || "Dashboard"}</span>;
+  }
+
+  return (
+    <Breadcrumb>
+      <BreadcrumbList>
+        {crumbs.map((crumb, index) => (
+          <BreadcrumbItem key={index}>
+            {index > 0 && <BreadcrumbSeparator />}
+            {crumb.href ? (
+              <BreadcrumbLink asChild>
+                <Link to={crumb.href} className="text-muted-foreground hover:text-foreground">
+                  {crumb.label}
+                </Link>
+              </BreadcrumbLink>
+            ) : (
+              <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+            )}
+          </BreadcrumbItem>
+        ))}
+      </BreadcrumbList>
+    </Breadcrumb>
+  );
+}
+
+// Top header
 function TopHeader({ onMenuClick }: { onMenuClick: () => void }) {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -178,7 +260,7 @@ function TopHeader({ onMenuClick }: { onMenuClick: () => void }) {
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-border bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-3">
         <Button
           variant="ghost"
           size="icon"
@@ -188,9 +270,9 @@ function TopHeader({ onMenuClick }: { onMenuClick: () => void }) {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Breadcrumb or context */}
-        <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
-          <span>Dashboard</span>
+        {/* Dynamic Breadcrumbs */}
+        <div className="hidden sm:block">
+          <DynamicBreadcrumbs />
         </div>
       </div>
 
@@ -286,7 +368,7 @@ export default function ClientLayout() {
         />
       )}
 
-      {/* Sidebar - hidden on mobile, shown on lg+ */}
+      {/* Sidebar */}
       <div className={cn("hidden lg:block", mobileMenuOpen && "!block")}>
         <Sidebar
           collapsed={sidebarCollapsed && !mobileMenuOpen}
