@@ -229,12 +229,30 @@ function normalizeWhmcsArray<T>(data: T | T[] | undefined): T[] {
   return Array.isArray(data) ? data : [data];
 }
 
+// Helper to construct panel URL from server info
+function constructPanelUrl(service: Service & { serverip?: string; serverhostname?: string }): string {
+  if (service.panel_url) return service.panel_url;
+  if (service.serverip) return `https://${service.serverip}:8090`;
+  if (service.serverhostname) return `https://${service.serverhostname}:8090`;
+  return "";
+}
+
+// Helper to normalize service with panel URL
+function normalizeService(service: Service & { serverip?: string; serverhostname?: string }): Service {
+  return {
+    ...service,
+    panel_url: constructPanelUrl(service),
+  };
+}
+
+type ServiceWithServer = Service & { serverip?: string; serverhostname?: string };
+
 // ============= Dashboard API =============
 export const dashboardApi = {
   get: async (userid: number): Promise<DashboardData> => {
     const [clientDetails, products, domains, invoices, tickets] = await Promise.all([
       whmcsRequest<{ client?: { firstname: string; lastname: string; email: string } }>("GetClientsDetails", { clientid: userid }),
-      whmcsRequest<{ products?: { product: Service | Service[] } }>("GetClientsProducts", { clientid: userid }),
+      whmcsRequest<{ products?: { product: ServiceWithServer | ServiceWithServer[] } }>("GetClientsProducts", { clientid: userid }),
       whmcsRequest<{ domains?: { domain: Domain | Domain[] } }>("GetClientsDomains", { clientid: userid }),
       whmcsRequest<{ invoices?: { invoice: Invoice | Invoice[] } }>("GetInvoices", { userid }),
       whmcsRequest<{ tickets?: { ticket: Ticket | Ticket[] } }>("GetTickets", { clientid: userid }),
@@ -246,7 +264,7 @@ export const dashboardApi = {
         lastname: clientDetails.client?.lastname || "",
         email: clientDetails.client?.email || "",
       },
-      services: normalizeWhmcsArray(products.products?.product),
+      services: normalizeWhmcsArray(products.products?.product).map(normalizeService),
       domains: normalizeWhmcsArray(domains.domains?.domain),
       invoices: normalizeWhmcsArray(invoices.invoices?.invoice),
       tickets: normalizeWhmcsArray(tickets.tickets?.ticket),
@@ -257,13 +275,14 @@ export const dashboardApi = {
 // ============= Services API =============
 export const servicesApi = {
   getAll: async (userid: number): Promise<Service[]> => {
-    const response = await whmcsRequest<{ products?: { product: Service | Service[] } }>("GetClientsProducts", { clientid: userid });
-    return normalizeWhmcsArray(response.products?.product);
+    const response = await whmcsRequest<{ products?: { product: ServiceWithServer | ServiceWithServer[] } }>("GetClientsProducts", { clientid: userid });
+    return normalizeWhmcsArray(response.products?.product).map(normalizeService);
   },
 
   getOne: async (id: number): Promise<Service> => {
-    const response = await whmcsRequest<{ products?: { product: Service[] } }>("GetClientsProducts", { serviceid: id });
-    return response.products?.product?.[0] || {} as Service;
+    const response = await whmcsRequest<{ products?: { product: ServiceWithServer[] } }>("GetClientsProducts", { serviceid: id });
+    const service = response.products?.product?.[0];
+    return service ? normalizeService(service) : {} as Service;
   },
 
   // Specific module actions for WHMCS
