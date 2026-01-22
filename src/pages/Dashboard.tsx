@@ -10,10 +10,8 @@ import { WelcomeHeader } from "@/components/dashboard/WelcomeHeader";
 import { StatsGrid } from "@/components/dashboard/StatsGrid";
 import { AlertBanner } from "@/components/dashboard/AlertBanner";
 import { ProjectsSection } from "@/components/dashboard/ProjectsSection";
-import { QuickActions } from "@/components/dashboard/QuickActions";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { DashboardSkeleton } from "@/components/dashboard/DashboardSkeleton";
-import { ResourceMonitor } from "@/components/dashboard/ResourceMonitor";
 
 interface DashboardData {
   user: { firstname: string; lastname: string; email: string };
@@ -79,8 +77,8 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      {/* Welcome Header with gradient background */}
+    <div className="space-y-6 animate-fade-in">
+      {/* Welcome Header */}
       <WelcomeHeader 
         firstname={data?.user?.firstname}
         servicesCount={services.length}
@@ -90,7 +88,7 @@ export default function Dashboard() {
       {/* Unpaid Invoice Alert */}
       <AlertBanner unpaidCount={unpaidInvoices.length} unpaidTotal={unpaidTotal} />
 
-      {/* Stats Grid */}
+      {/* Stats Grid - 4 key metrics */}
       <StatsGrid 
         services={services.length}
         domains={domains.length}
@@ -99,19 +97,13 @@ export default function Dashboard() {
         openTickets={openTickets.length}
       />
 
-      {/* Quick Actions */}
-      <QuickActions />
-
-      {/* Resource Monitor */}
-      <ResourceMonitor services={services} />
-
-      {/* Projects Section */}
+      {/* Projects Section - Primary Focus */}
       <ProjectsSection services={services} />
 
-      {/* Activity Feed - Invoices, Tickets, Domain Alerts */}
+      {/* Activity Feed - Critical alerts only */}
       <ActivityFeed 
-        invoices={invoices}
-        tickets={tickets}
+        invoices={unpaidInvoices}
+        tickets={openTickets}
         domains={domains}
       />
     </div>

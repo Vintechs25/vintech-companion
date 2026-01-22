@@ -23,18 +23,12 @@ import {
   Key,
   Power,
   Loader2,
-  Database,
-  Mail,
-  Shield,
-  FolderOpen,
-  Settings,
-  Terminal,
   Server,
   Clock,
   Copy,
   Check,
-  Code,
-  Globe,
+  Terminal,
+  Settings,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -114,49 +108,10 @@ function StatusIndicator({ active }: { active: boolean }) {
   );
 }
 
-// Quick link card for CyberPanel features
-function QuickLinkCard({
-  icon: Icon,
-  title,
-  description,
-  href,
-}: {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  href: string;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="group block"
-    >
-      <Card className="h-full transition-all hover:border-primary/50 hover:shadow-md">
-        <CardContent className="pt-6">
-          <div className="flex items-start gap-4">
-            <div className="h-10 w-10 rounded-lg bg-muted flex items-center justify-center shrink-0 group-hover:bg-primary/10 transition-colors">
-              <Icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium flex items-center gap-2">
-                {title}
-                <ExternalLink className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-              </h4>
-              <p className="text-sm text-muted-foreground">{description}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </a>
-  );
-}
-
 export default function ServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { openCyberPanel, isLoading: ssoLoading } = useCyberPanelSSO();
+  const { openCyberPanel } = useCyberPanelSSO();
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -309,59 +264,52 @@ export default function ServiceDetails() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="icon"
-            className="shrink-0 mt-1"
+            className="shrink-0"
             onClick={() => navigate("/hosting")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                <Server className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div>
-                <h1 className="text-xl font-semibold">{service.domain}</h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <StatusIndicator active={isActive} />
-                  <span className="text-muted-foreground">·</span>
-                  <span className="text-sm text-muted-foreground">{service.product || "Hosting"}</span>
-                </div>
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-lg",
+              isActive ? "bg-success/10" : "bg-muted"
+            )}>
+              <Server className={cn("h-5 w-5", isActive ? "text-success" : "text-muted-foreground")} />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold">{service.domain}</h1>
+              <div className="flex items-center gap-2">
+                <StatusIndicator active={isActive} />
+                <span className="text-muted-foreground">·</span>
+                <span className="text-sm text-muted-foreground">{service.product || "Hosting"}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main CTA - Open CyberPanel with SSO */}
-        <div className="flex items-center gap-2 ml-14 md:ml-0">
-          {panelUrl && (
-            <Button 
-              size="lg" 
-              className="gap-2"
-              onClick={handleOpenCyberPanel}
-              disabled={ssoLoading}
-            >
-              {ssoLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Terminal className="h-4 w-4" />
-              )}
-              Open CyberPanel
-              <ExternalLink className="h-3 w-3 ml-1" />
-            </Button>
-          )}
-        </div>
+        {/* Primary CTA */}
+        {panelUrl && (
+          <Button 
+            size="lg" 
+            className="gap-2 w-full sm:w-auto"
+            onClick={handleOpenCyberPanel}
+          >
+            <Terminal className="h-4 w-4" />
+            Open CyberPanel
+            <ExternalLink className="h-3 w-3" />
+          </Button>
+        )}
       </div>
 
       {/* Main Content Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left Column - Server Details & Quick Actions */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Server Details */}
+        {/* Left Column - Server Details */}
+        <div className="lg:col-span-2">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Access Details</CardTitle>
@@ -374,51 +322,6 @@ export default function ServiceDetails() {
               {panelUrl && <AccessRow label="Panel URL" value={panelUrl} />}
             </CardContent>
           </Card>
-
-          {/* Quick Links to CyberPanel Features */}
-          {panelUrl && (
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-muted-foreground">Manage in CyberPanel</h3>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <QuickLinkCard
-                  icon={FolderOpen}
-                  title="File Manager"
-                  description="Browse and edit files"
-                  href={`${panelUrl}/filemanager/${service.domain}`}
-                />
-                <QuickLinkCard
-                  icon={Database}
-                  title="Databases"
-                  description="MySQL/MariaDB management"
-                  href={`${panelUrl}/dataBases/listDatabases`}
-                />
-                <QuickLinkCard
-                  icon={Mail}
-                  title="Email Accounts"
-                  description="Create and manage emails"
-                  href={`${panelUrl}/email/listEmails`}
-                />
-                <QuickLinkCard
-                  icon={Shield}
-                  title="SSL Certificates"
-                  description="Manage HTTPS security"
-                  href={`${panelUrl}/manageSSL/${service.domain}`}
-                />
-                <QuickLinkCard
-                  icon={Globe}
-                  title="Domains & DNS"
-                  description="DNS records management"
-                  href={`${panelUrl}/dns/listDNS`}
-                />
-                <QuickLinkCard
-                  icon={Code}
-                  title="PHP Settings"
-                  description="Configure PHP version"
-                  href={`${panelUrl}/websites/listWebsitesv2`}
-                />
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Right Column - Actions & Info */}
@@ -426,7 +329,7 @@ export default function ServiceDetails() {
           {/* Quick Actions */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Quick Actions</CardTitle>
+              <CardTitle className="text-base">Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
@@ -502,27 +405,10 @@ export default function ServiceDetails() {
                   Stop Server
                 </Button>
               )}
-
-              {panelUrl && (
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start gap-2"
-                  onClick={handleOpenCyberPanel}
-                  disabled={ssoLoading}
-                >
-                  {ssoLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Terminal className="h-4 w-4" />
-                  )}
-                  Full Management
-                  <ExternalLink className="h-3 w-3 ml-auto" />
-                </Button>
-              )}
             </CardContent>
           </Card>
 
-          {/* Renewal Info */}
+          {/* Billing Info */}
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
@@ -532,16 +418,16 @@ export default function ServiceDetails() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Next Due Date</span>
-                <span className="font-medium">{service.nextduedate || "—"}</span>
+                <span className="text-sm text-muted-foreground">Next Due</span>
+                <span className="font-medium text-sm">{service.nextduedate || "—"}</span>
               </div>
               {service.billingcycle && (
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Billing Cycle</span>
-                  <Badge variant="secondary">{service.billingcycle}</Badge>
+                  <span className="text-sm text-muted-foreground">Cycle</span>
+                  <Badge variant="secondary" className="text-xs">{service.billingcycle}</Badge>
                 </div>
               )}
-              <Button variant="outline" className="w-full justify-start gap-2 mt-2" asChild>
+              <Button variant="outline" size="sm" className="w-full justify-start gap-2 mt-2" asChild>
                 <a
                   href={`https://billing.vintechdev.store/clientarea.php?action=productdetails&id=${service.id}`}
                   target="_blank"
@@ -562,16 +448,16 @@ export default function ServiceDetails() {
             </CardHeader>
             <CardContent className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">Service ID</span>
+                <span className="text-muted-foreground">ID</span>
                 <span className="font-mono">{service.id}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Product</span>
-                <span>{service.product || "—"}</span>
+                <span className="truncate ml-4">{service.product || "—"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Status</span>
-                <Badge variant={isActive ? "default" : "secondary"}>{service.status}</Badge>
+                <Badge variant={isActive ? "default" : "secondary"} className="text-xs">{service.status}</Badge>
               </div>
             </CardContent>
           </Card>
