@@ -39,9 +39,21 @@ import {
   Clock,
   Copy,
   Check,
+  Archive,
+  Code,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+
+// Import CyberPanel management components
+import {
+  LiveResourceMonitor,
+  EmailManager,
+  DatabaseManager,
+  SSLManager,
+  BackupManager,
+  PHPManager,
+} from "@/components/service";
 
 // Cloudways-style tabs
 const managementTabs = [
@@ -491,40 +503,21 @@ export default function ServiceDetails() {
           </div>
         </TabsContent>
 
-        {/* Monitoring Tab */}
+        {/* Monitoring Tab - Now with LIVE data */}
         <TabsContent value="monitoring" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                Server Monitoring
-              </CardTitle>
-              <CardDescription>View server performance metrics in CyberPanel</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center justify-center py-12">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted mb-4">
-                  <Activity className="h-8 w-8 text-muted-foreground" />
-                </div>
-                <h3 className="font-medium mb-2">Server Metrics</h3>
-                <p className="text-sm text-muted-foreground text-center mb-6 max-w-sm">
-                  Monitor CPU, memory, disk usage and more through your CyberPanel dashboard
-                </p>
-                {service.panel_url && (
-                  <Button asChild>
-                    <a href={service.panel_url} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Open CyberPanel
-                    </a>
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          {/* Live Resource Monitor */}
+          <LiveResourceMonitor domain={service.domain} refreshInterval={30} />
+          
+          {/* SSL Manager */}
+          <SSLManager domain={service.domain} />
+          
+          {/* Backup Manager */}
+          <BackupManager domain={service.domain} />
         </TabsContent>
 
-        {/* Applications Tab */}
+        {/* Applications Tab - Real CyberPanel Management */}
         <TabsContent value="applications" className="space-y-6">
+          {/* Quick Install Section */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {/* WordPress */}
             <Card>
@@ -552,27 +545,6 @@ export default function ServiceDetails() {
               </CardContent>
             </Card>
 
-            {/* Databases */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Database className="h-4 w-4" />
-                  Databases
-                </CardTitle>
-                <CardDescription>MySQL management</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {service.panel_url && (
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={`${service.panel_url}/dataBases/listDatabases`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Manage Databases
-                    </a>
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-
             {/* File Manager */}
             <Card>
               <CardHeader>
@@ -594,48 +566,36 @@ export default function ServiceDetails() {
               </CardContent>
             </Card>
 
-            {/* Email */}
+            {/* PHP Version */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Email Accounts
+                  <Code className="h-4 w-4" />
+                  PHP Version
                 </CardTitle>
-                <CardDescription>Create and manage emails</CardDescription>
+                <CardDescription>Change PHP configuration</CardDescription>
               </CardHeader>
               <CardContent>
                 {service.panel_url && (
                   <Button variant="outline" className="w-full" asChild>
-                    <a href={`${service.panel_url}/email/listEmails`} target="_blank" rel="noopener noreferrer">
+                    <a href={`${service.panel_url}/websites/listPHPWebsite`} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Manage Emails
-                    </a>
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* SSL */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Shield className="h-4 w-4" />
-                  SSL Certificate
-                </CardTitle>
-                <CardDescription>Free Let's Encrypt SSL</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {service.panel_url && (
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href={`${service.panel_url}/manageSSL/issueSSL`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Issue SSL
+                      Manage PHP
                     </a>
                   </Button>
                 )}
               </CardContent>
             </Card>
           </div>
+          
+          {/* Email Manager */}
+          <EmailManager domain={service.domain} />
+          
+          {/* Database Manager */}
+          <DatabaseManager domain={service.domain} />
+          
+          {/* PHP Manager */}
+          <PHPManager domain={service.domain} />
         </TabsContent>
 
         {/* Settings Tab */}
