@@ -67,53 +67,89 @@ interface DNSRecord {
   priority?: number;
 }
 
-// CyberPanel API endpoint mapping - based on official API structure
-// API runs on port 8090 and uses controller-based paths
-const API_ENDPOINTS = {
+// CyberPanel has multiple API path conventions depending on version/config.
+// We try the common variants to avoid hard-coding a single structure.
+const API_ENDPOINTS: Record<string, string[]> = {
   // Server status
-  serverStatus: "/api/serverStatus",
-  
+  serverStatus: ["/serverstatus/serverStatus", "/api/serverStatus"],
+
   // Website management
-  fetchWebsites: "/api/fetchWebsites",
-  getWebsiteStatus: "/api/getWebsiteStatus",
-  
+  fetchWebsites: ["/website/listWebsites", "/api/fetchWebsites", "/api/listWebsites"],
+  getWebsiteStatus: ["/website/websiteStats", "/api/getWebsiteStatus"],
+
   // Email management
-  getEmailsForDomain: "/api/getEmailsForDomain",
-  submitEmailCreation: "/api/submitEmailCreation",
-  deleteEmail: "/api/submitEmailDeletion",
-  
+  getEmailsForDomain: ["/mail/listEmails", "/api/getEmailsForDomain", "/api/listEmails"],
+  submitEmailCreation: ["/mail/createEmail", "/api/submitEmailCreation", "/api/createEmail"],
+  deleteEmail: ["/mail/deleteEmail", "/api/submitEmailDeletion", "/api/deleteEmail"],
+
   // Database management
-  fetchDatabases: "/api/fetchDatabases",
-  submitDBCreation: "/api/submitDBCreation",
-  submitDatabaseDeletion: "/api/submitDatabaseDeletion",
-  
+  fetchDatabases: ["/databases/listDatabases", "/api/fetchDatabases", "/api/listDatabases"],
+  submitDBCreation: ["/databases/createDatabase", "/api/submitDBCreation", "/api/createDatabase"],
+  submitDatabaseDeletion: ["/databases/deleteDatabase", "/api/submitDatabaseDeletion", "/api/deleteDatabase"],
+
   // SSL management
-  obtainSSLForADomain: "/api/obtainSSLForADomain",
-  
+  obtainSSLForADomain: ["/ssl/issueSSL", "/ssl/obtainSSL", "/api/obtainSSLForADomain", "/api/issueSSL"],
+
   // Backup management
-  getBackupsForDomain: "/api/getBackupsForDomain",
-  submitBackupCreation: "/api/submitBackupCreation",
-  submitRestore: "/api/submitRestore",
-  
+  getBackupsForDomain: ["/backup/listBackups", "/api/getBackupsForDomain", "/api/listBackups"],
+  submitBackupCreation: ["/backup/createBackup", "/api/submitBackupCreation", "/api/createBackup"],
+  submitRestore: ["/backup/restoreBackup", "/api/submitRestore", "/api/restoreBackup"],
+
   // DNS management
-  getCurrentRecordsForDomain: "/api/getCurrentRecordsForDomain",
-  addDNSRecord: "/api/addDNSRecord",
-  deleteDNSRecord: "/api/deleteDNSRecord",
-  
+  getCurrentRecordsForDomain: ["/dns/listDNSRecords", "/api/getCurrentRecordsForDomain", "/api/listDNSRecords"],
+  addDNSRecord: ["/dns/addDNSRecord", "/api/addDNSRecord"],
+  deleteDNSRecord: ["/dns/deleteDNSRecord", "/api/deleteDNSRecord"],
+
   // FTP management
-  getAllFTPAccounts: "/api/getAllFTPAccounts",
-  submitFTPCreation: "/api/submitFTPCreation",
-  
+  getAllFTPAccounts: ["/ftp/listFTPAccounts", "/api/getAllFTPAccounts", "/api/listFTPAccounts"],
+  submitFTPCreation: ["/ftp/createFTPAccount", "/api/submitFTPCreation", "/api/createFTPAccount"],
+
   // PHP management
-  getCurrentPHP: "/api/getCurrentPHP",
-  changePHP: "/api/changePHP",
+  getCurrentPHP: ["/website/getPHPVersion", "/api/getCurrentPHP", "/api/getPHP"],
+  changePHP: ["/website/changePHPVersion", "/api/changePHP", "/api/changePHPVersion"],
 };
 
+function normalizeBaseUrl(raw: string): string {
+  let url = raw.trim();
+  if (!url.startsWith("http://") && !url.startsWith("https://")) {
+    url = `https://${url}`;
+  }
+  return url.replace(/\/+$/, "");
+}
+
+function getBaseUrlCandidates(raw: string): string[] {
+  const base = normalizeBaseUrl(raw);
+  try {
+    const u = new URL(base);
+    const hasPort = Boolean(u.port);
+    const candidates: string[] = [];
+
+    // As-provided
+    candidates.push(base);
+
+    // Try default CyberPanel port if none is set
+    if (!hasPort) {
+      candidates.push(`${u.protocol}//${u.hostname}:8090`);
+    }
+
+    // If explicitly :8090, also try without it (some setups reverse-proxy)
+    if (u.port === "8090") {
+      candidates.push(`${u.protocol}//${u.hostname}`);
+    }
+
+    // De-dupe
+    return Array.from(new Set(candidates));
+  } catch {
+    // Fallback: best-effort
+    return [base, `${base}:8090`].filter((v, i, a) => a.indexOf(v) === i);
+  }
+}
+
 async function cyberPanelRequest(
-  endpoint: string,
+  endpoints: string | string[],
   data: Record<string, unknown>
 ): Promise<CyberPanelResponse> {
-  let CYBERPANEL_URL = Deno.env.get("CYBERPANEL_URL");
+  const CYBERPANEL_URL = Deno.env.get("CYBERPANEL_URL");
   const CYBERPANEL_ADMIN_USER = Deno.env.get("CYBERPANEL_ADMIN_USER");
   const CYBERPANEL_ADMIN_PASS = Deno.env.get("CYBERPANEL_ADMIN_PASS");
 
@@ -121,41 +157,61 @@ async function cyberPanelRequest(
     throw new Error("CyberPanel credentials not configured");
   }
 
-  // Ensure URL has proper protocol prefix
-  if (!CYBERPANEL_URL.startsWith("http://") && !CYBERPANEL_URL.startsWith("https://")) {
-    CYBERPANEL_URL = `https://${CYBERPANEL_URL}`;
-  }
-  
-  // Remove trailing slash if present
-  CYBERPANEL_URL = CYBERPANEL_URL.replace(/\/$/, "");
-  
-  // Add port 8090 if not already specified (CyberPanel API default port)
-  if (!CYBERPANEL_URL.includes(":8090") && !CYBERPANEL_URL.includes(":443")) {
-    CYBERPANEL_URL = `${CYBERPANEL_URL}:8090`;
+  const baseCandidates = getBaseUrlCandidates(CYBERPANEL_URL);
+  const endpointCandidates = Array.isArray(endpoints) ? endpoints : [endpoints];
+
+  const tried: string[] = [];
+  let lastNon404: { status: number; body: string } | null = null;
+
+  for (const base of baseCandidates) {
+    for (const ep of endpointCandidates) {
+      const url = `${base}${ep}`;
+      tried.push(url);
+      console.log(`CyberPanel API request to: ${url}`);
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          // Some CyberPanel installs accept these keys
+          adminUser: CYBERPANEL_ADMIN_USER,
+          adminPass: CYBERPANEL_ADMIN_PASS,
+          // Others expect an auth object; include both to be safe.
+          auth: { name: CYBERPANEL_ADMIN_USER, password: CYBERPANEL_ADMIN_PASS },
+          ...data,
+        }),
+      });
+
+      if (response.ok) {
+        return await response.json();
+      }
+
+      const text = await response.text();
+
+      // 404 is often just the wrong path variant; keep trying.
+      if (response.status === 404) {
+        continue;
+      }
+
+      lastNon404 = { status: response.status, body: text };
+      // Non-404 usually means we're hitting the right handler but with wrong payload/permissions.
+      // Stop early so we surface the real error.
+      break;
+    }
+    if (lastNon404) break;
   }
 
-  const url = `${CYBERPANEL_URL}${endpoint}`;
-  
-  console.log(`CyberPanel API request to: ${url}`);
-  
-  const response = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      adminUser: CYBERPANEL_ADMIN_USER,
-      adminPass: CYBERPANEL_ADMIN_PASS,
-      ...data,
-    }),
-  });
-
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`CyberPanel API error: ${response.status} - ${text}`);
+  if (lastNon404) {
+    throw new Error(`CyberPanel API error: ${lastNon404.status} - ${lastNon404.body}`);
   }
 
-  return await response.json();
+  throw new Error(
+    `CyberPanel API error: 404 - endpoint not found. Tried:\n${tried.slice(0, 10).join("\n")}${
+      tried.length > 10 ? "\n..." : ""
+    }\n\nFix: set CYBERPANEL_URL to the CyberPanel base URL (include protocol and port if needed, e.g. https://your-server:8090).`
+  );
 }
 
 serve(async (req) => {
