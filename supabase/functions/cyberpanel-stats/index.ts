@@ -9,14 +9,60 @@ interface CyberPanelResponse {
   status?: number;
   fetchStatus?: string;
   error_message?: string;
-  // Server stats
   cpuUsage?: number;
   ramUsage?: number;
   diskUsage?: number;
-  // Website stats
   diskUsed?: number;
   bandwidthUsed?: number;
   data?: unknown;
+  // Email accounts
+  emailAccounts?: EmailAccount[];
+  // Databases
+  databases?: Database[];
+  // SSL
+  sslStatus?: string;
+  sslExpiry?: string;
+  // Backups
+  backups?: Backup[];
+  // List websites
+  websitesList?: Website[];
+  // DNS records
+  records?: DNSRecord[];
+}
+
+interface EmailAccount {
+  email: string;
+  diskUsed: string;
+}
+
+interface Database {
+  name: string;
+  size: string;
+}
+
+interface Backup {
+  name: string;
+  date: string;
+  size: string;
+}
+
+interface Website {
+  domain: string;
+  adminEmail: string;
+  ipAddress: string;
+  admin: string;
+  package: string;
+  state: string;
+  diskUsed: string;
+}
+
+interface DNSRecord {
+  id: number;
+  name: string;
+  type: string;
+  content: string;
+  ttl: number;
+  priority?: number;
 }
 
 async function cyberPanelRequest(
@@ -54,21 +100,21 @@ async function cyberPanelRequest(
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { action, domain } = await req.json();
+    const body = await req.json();
+    const { action, domain, domains } = body;
 
     let result: Record<string, unknown> = {};
 
     switch (action) {
+      // ============= SERVER STATS =============
       case "serverStatus": {
-        // Get overall server status
         const stats = await cyberPanelRequest("/api/serverStatus", {
-          serverStatusType: "1", // 1 = Get all stats
+          serverStatusType: "1",
         });
         
         result = {
@@ -79,20 +125,14 @@ serve(async (req) => {
         break;
       }
 
+      // ============= WEBSITE STATS =============
       case "websiteStats": {
-        if (!domain) {
-          throw new Error("Domain is required for websiteStats");
-        }
+        if (!domain) throw new Error("Domain is required");
 
-        // Get website-specific disk usage
-        const diskStats = await cyberPanelRequest("/api/getDiskUsage", {
-          websiteName: domain,
-        });
-
-        // Get bandwidth usage
-        const bwStats = await cyberPanelRequest("/api/getBandwidthUsage", {
-          websiteName: domain,
-        });
+        const [diskStats, bwStats] = await Promise.all([
+          cyberPanelRequest("/api/getDiskUsage", { websiteName: domain }),
+          cyberPanelRequest("/api/getBandwidthUsage", { websiteName: domain }),
+        ]);
 
         result = {
           domain,
@@ -103,9 +143,6 @@ serve(async (req) => {
       }
 
       case "allWebsitesStats": {
-        // Get stats for multiple domains
-        const { domains } = await req.json();
-        
         if (!domains || !Array.isArray(domains)) {
           throw new Error("Domains array is required");
         }
@@ -113,12 +150,10 @@ serve(async (req) => {
         const websiteStats = await Promise.all(
           domains.map(async (d: string) => {
             try {
-              const diskStats = await cyberPanelRequest("/api/getDiskUsage", {
-                websiteName: d,
-              });
-              const bwStats = await cyberPanelRequest("/api/getBandwidthUsage", {
-                websiteName: d,
-              });
+              const [diskStats, bwStats] = await Promise.all([
+                cyberPanelRequest("/api/getDiskUsage", { websiteName: d }),
+                cyberPanelRequest("/api/getBandwidthUsage", { websiteName: d }),
+              ]);
               
               return {
                 domain: d,
@@ -137,7 +172,6 @@ serve(async (req) => {
           })
         );
 
-        // Also get server-wide stats
         const serverStats = await cyberPanelRequest("/api/serverStatus", {
           serverStatusType: "1",
         });
@@ -149,6 +183,308 @@ serve(async (req) => {
             disk: serverStats.diskUsage || 0,
           },
           websites: websiteStats,
+        };
+        break;
+      }
+
+      // ============= LIST ALL WEBSITES =============
+      case "listWebsites": {
+        const response = await cyberPanelRequest("/api/listWebsites", {});
+        
+        result = {
+          websites: response.websitesList || [],
+        };
+        break;
+      }
+
+      // ============= EMAIL ACCOUNTS =============
+      case "listEmails": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/listEmails", {
+          domain,
+        });
+        
+        result = {
+          emails: response.emailAccounts || [],
+        };
+        break;
+      }
+
+      case "createEmail": {
+        const { email, password } = body;
+        if (!domain || !email || !password) {
+          throw new Error("Domain, email, and password are required");
+        }
+
+        const response = await cyberPanelRequest("/api/createEmail", {
+          domainName: domain,
+          userName: email,
+          password,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "Email created successfully",
+        };
+        break;
+      }
+
+      case "deleteEmail": {
+        const { email } = body;
+        if (!email) throw new Error("Email is required");
+
+        const response = await cyberPanelRequest("/api/deleteEmail", {
+          email,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "Email deleted successfully",
+        };
+        break;
+      }
+
+      // ============= DATABASES =============
+      case "listDatabases": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/listDatabases", {
+          databaseWebsite: domain,
+        });
+        
+        result = {
+          databases: response.databases || [],
+        };
+        break;
+      }
+
+      case "createDatabase": {
+        const { dbName, dbUser, dbPassword } = body;
+        if (!domain || !dbName || !dbUser || !dbPassword) {
+          throw new Error("Domain, dbName, dbUser, and dbPassword are required");
+        }
+
+        const response = await cyberPanelRequest("/api/createDatabase", {
+          databaseWebsite: domain,
+          dbName,
+          dbUsername: dbUser,
+          dbPassword,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "Database created successfully",
+        };
+        break;
+      }
+
+      case "deleteDatabase": {
+        const { dbName } = body;
+        if (!dbName) throw new Error("Database name is required");
+
+        const response = await cyberPanelRequest("/api/deleteDatabase", {
+          dbName,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "Database deleted successfully",
+        };
+        break;
+      }
+
+      // ============= SSL CERTIFICATES =============
+      case "sslStatus": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/getSSLStatus", {
+          domainName: domain,
+        });
+        
+        result = {
+          issued: response.sslStatus === "1" || response.sslStatus === "issued",
+          expiry: response.sslExpiry || null,
+        };
+        break;
+      }
+
+      case "issueSSL": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/issueSSL", {
+          domainName: domain,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "SSL certificate issued successfully",
+        };
+        break;
+      }
+
+      // ============= BACKUPS =============
+      case "listBackups": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/listBackups", {
+          websiteName: domain,
+        });
+        
+        result = {
+          backups: response.backups || [],
+        };
+        break;
+      }
+
+      case "createBackup": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/createBackup", {
+          websiteName: domain,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "Backup started successfully",
+        };
+        break;
+      }
+
+      case "restoreBackup": {
+        const { backupName } = body;
+        if (!domain || !backupName) {
+          throw new Error("Domain and backup name are required");
+        }
+
+        const response = await cyberPanelRequest("/api/restoreBackup", {
+          websiteName: domain,
+          backupName,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "Restore started successfully",
+        };
+        break;
+      }
+
+      // ============= DNS RECORDS =============
+      case "listDNS": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/listDNSRecords", {
+          domainName: domain,
+        });
+        
+        result = {
+          records: response.records || [],
+        };
+        break;
+      }
+
+      case "addDNS": {
+        const { recordName, recordType, recordValue, ttl, priority } = body;
+        if (!domain || !recordName || !recordType || !recordValue) {
+          throw new Error("Domain, recordName, recordType, and recordValue are required");
+        }
+
+        const response = await cyberPanelRequest("/api/addDNSRecord", {
+          domainName: domain,
+          name: recordName,
+          type: recordType,
+          value: recordValue,
+          ttl: ttl || 14400,
+          priority: priority || 0,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "DNS record added successfully",
+        };
+        break;
+      }
+
+      case "deleteDNS": {
+        const { recordId } = body;
+        if (!domain || !recordId) {
+          throw new Error("Domain and recordId are required");
+        }
+
+        const response = await cyberPanelRequest("/api/deleteDNSRecord", {
+          domainName: domain,
+          id: recordId,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "DNS record deleted successfully",
+        };
+        break;
+      }
+
+      // ============= FTP ACCOUNTS =============
+      case "listFTP": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/listFTPAccounts", {
+          domainName: domain,
+        });
+        
+        result = {
+          ftpAccounts: response.data || [],
+        };
+        break;
+      }
+
+      case "createFTP": {
+        const { ftpUser, ftpPassword, path } = body;
+        if (!domain || !ftpUser || !ftpPassword) {
+          throw new Error("Domain, ftpUser, and ftpPassword are required");
+        }
+
+        const response = await cyberPanelRequest("/api/createFTPAccount", {
+          domainName: domain,
+          userName: ftpUser,
+          password: ftpPassword,
+          path: path || "/home/" + domain + "/public_html",
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "FTP account created successfully",
+        };
+        break;
+      }
+
+      // ============= PHP VERSION =============
+      case "getPHP": {
+        if (!domain) throw new Error("Domain is required");
+
+        const response = await cyberPanelRequest("/api/getCurrentPHP", {
+          domainName: domain,
+        });
+        
+        result = {
+          phpVersion: response.data || "Unknown",
+        };
+        break;
+      }
+
+      case "changePHP": {
+        const { phpVersion } = body;
+        if (!domain || !phpVersion) {
+          throw new Error("Domain and phpVersion are required");
+        }
+
+        const response = await cyberPanelRequest("/api/changePHP", {
+          domainName: domain,
+          phpVersion,
+        });
+        
+        result = {
+          success: response.status === 1,
+          message: response.error_message || "PHP version changed successfully",
         };
         break;
       }
