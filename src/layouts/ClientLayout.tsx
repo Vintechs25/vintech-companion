@@ -35,6 +35,7 @@ import {
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "@/components/shared/NotificationBell";
+import { QuickLaunchDropdown } from "@/components/shared/QuickLaunchDropdown";
 
 // DigitalOcean-style navigation items
 const navItems = [
@@ -194,6 +195,9 @@ function TopHeader({ onMenuClick }: { onMenuClick: () => void }) {
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Quick Launch */}
+        <QuickLaunchDropdown />
+
         {/* Help */}
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
