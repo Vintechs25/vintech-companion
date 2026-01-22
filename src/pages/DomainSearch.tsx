@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Check, X, ArrowRight, Globe, Shield, RefreshCw } from "lucide-react";
+import { Search, Check, X, ArrowRight, Globe, Shield, RefreshCw, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { domainsApi, type DomainSearchResult } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useTldPricing } from "@/hooks/useTldPricing";
 import { z } from "zod";
 import Navbar from "@/components/landing/Navbar";
 import Footer from "@/components/landing/Footer";
@@ -16,15 +18,6 @@ const domainSchema = z.string()
   .max(253, "Domain name is too long")
   .regex(/^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z]{2,})?$/, "Invalid domain format");
 
-const tldPricing = [
-  { tld: ".com", price: "1500", popular: true },
-  { tld: ".net", price: "1800", popular: true },
-  { tld: ".org", price: "1600", popular: false },
-  { tld: ".io", price: "4500", popular: true },
-  { tld: ".co", price: "3500", popular: false },
-  { tld: ".dev", price: "2000", popular: false },
-];
-
 export default function DomainSearch() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -32,6 +25,7 @@ export default function DomainSearch() {
   const [hasSearched, setHasSearched] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { pricing: tldPricing, isLoading: isPricingLoading } = useTldPricing();
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,23 +196,39 @@ export default function DomainSearch() {
             <div className="container mx-auto px-4">
               <div className="text-center mb-12">
                 <h2 className="text-2xl font-bold mb-2">Domain Pricing</h2>
-                <p className="text-muted-foreground">Popular domain extensions</p>
+                <p className="text-muted-foreground">
+                  {isPricingLoading ? "Loading latest prices..." : "Live prices from WHMCS"}
+                </p>
               </div>
               
-              <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
-                {tldPricing.map((tld) => (
-                  <Card key={tld.tld} className="text-center hover:border-primary/50 transition-colors">
-                    <CardContent className="pt-6">
-                      <p className="text-xl font-bold text-primary">{tld.tld}</p>
-                      <p className="text-2xl font-bold mt-2">KES {parseFloat(tld.price).toLocaleString()}</p>
-                      <p className="text-sm text-muted-foreground">/year</p>
-                      {tld.popular && (
-                        <Badge className="mt-2" variant="secondary">Popular</Badge>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              {isPricingLoading ? (
+                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <Card key={i} className="text-center">
+                      <CardContent className="pt-6">
+                        <Skeleton className="h-6 w-12 mx-auto mb-2" />
+                        <Skeleton className="h-8 w-20 mx-auto mb-1" />
+                        <Skeleton className="h-4 w-10 mx-auto" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-5xl mx-auto">
+                  {tldPricing.slice(0, 12).map((tld) => (
+                    <Card key={tld.tld} className="text-center hover:border-primary/50 transition-colors">
+                      <CardContent className="pt-6">
+                        <p className="text-xl font-bold text-primary">{tld.tld}</p>
+                        <p className="text-2xl font-bold mt-2">KES {parseFloat(tld.register).toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">/year</p>
+                        {tld.popular && (
+                          <Badge className="mt-2" variant="secondary">Popular</Badge>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         )}
