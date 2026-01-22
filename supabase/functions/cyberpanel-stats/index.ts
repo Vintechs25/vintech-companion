@@ -69,13 +69,21 @@ async function cyberPanelRequest(
   endpoint: string,
   data: Record<string, unknown>
 ): Promise<CyberPanelResponse> {
-  const CYBERPANEL_URL = Deno.env.get("CYBERPANEL_URL");
+  let CYBERPANEL_URL = Deno.env.get("CYBERPANEL_URL");
   const CYBERPANEL_ADMIN_USER = Deno.env.get("CYBERPANEL_ADMIN_USER");
   const CYBERPANEL_ADMIN_PASS = Deno.env.get("CYBERPANEL_ADMIN_PASS");
 
   if (!CYBERPANEL_URL || !CYBERPANEL_ADMIN_USER || !CYBERPANEL_ADMIN_PASS) {
     throw new Error("CyberPanel credentials not configured");
   }
+
+  // Ensure URL has proper protocol prefix
+  if (!CYBERPANEL_URL.startsWith("http://") && !CYBERPANEL_URL.startsWith("https://")) {
+    CYBERPANEL_URL = `https://${CYBERPANEL_URL}`;
+  }
+  
+  // Remove trailing slash if present
+  CYBERPANEL_URL = CYBERPANEL_URL.replace(/\/$/, "");
 
   const url = `${CYBERPANEL_URL}${endpoint}`;
   
