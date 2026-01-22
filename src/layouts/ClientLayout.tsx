@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "@/components/shared/NotificationBell";
 
 // DigitalOcean-style navigation items
 const navItems = [
@@ -202,6 +203,9 @@ function TopHeader({ onMenuClick }: { onMenuClick: () => void }) {
           </TooltipTrigger>
           <TooltipContent>Help & Docs</TooltipContent>
         </Tooltip>
+
+        {/* Notifications */}
+        <NotificationBell />
 
         {/* Theme Toggle */}
         <ThemeToggle />
