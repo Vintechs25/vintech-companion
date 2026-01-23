@@ -11,11 +11,6 @@ import { Button } from "@/components/ui/button";
 import {
   MoreVertical,
   ExternalLink,
-  FolderOpen,
-  Database,
-  Mail,
-  Shield,
-  Globe,
   Settings,
   Terminal,
 } from "lucide-react";
@@ -28,23 +23,14 @@ interface QuickActionsMenuProps {
 }
 
 export function QuickActionsMenu({ service, onManage }: QuickActionsMenuProps) {
-  const { openCyberPanel } = useCyberPanelSSO();
-  const panelUrl = service.panel_url || "";
+  const { openWhmcsSso } = useCyberPanelSSO();
 
-  const handleOpenPanel = (e: React.MouseEvent, path?: string) => {
+  const handleOpenPanel = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const url = path ? `${panelUrl}${path}` : panelUrl;
-    openCyberPanel(url, service.username, service.domain);
+    // Use WHMCS SSO - redirects to product details page with autologin button
+    openWhmcsSso(service.id);
   };
-
-  const quickLinks = [
-    { label: "File Manager", icon: FolderOpen, path: `/filemanager/${service.domain}` },
-    { label: "Databases", icon: Database, path: "/dataBases/listDatabases" },
-    { label: "Email", icon: Mail, path: "/email/listEmails" },
-    { label: "SSL", icon: Shield, path: `/manageSSL/${service.domain}` },
-    { label: "DNS", icon: Globe, path: "/dns/listDNS" },
-  ];
 
   return (
     <DropdownMenu>
@@ -59,27 +45,12 @@ export function QuickActionsMenu({ service, onManage }: QuickActionsMenuProps) {
           Quick Actions
         </DropdownMenuLabel>
         
-        {panelUrl && (
-          <>
-            <DropdownMenuItem onClick={(e) => handleOpenPanel(e as unknown as React.MouseEvent)}>
-              <Terminal className="h-4 w-4 mr-2" />
-              Open CyberPanel
-              <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {quickLinks.map((link) => (
-              <DropdownMenuItem 
-                key={link.label} 
-                onClick={(e) => handleOpenPanel(e as unknown as React.MouseEvent, link.path)}
-              >
-                <link.icon className="h-4 w-4 mr-2" />
-                {link.label}
-                <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
-              </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-          </>
-        )}
+        <DropdownMenuItem onClick={handleOpenPanel}>
+          <Terminal className="h-4 w-4 mr-2" />
+          Open Control Panel
+          <ExternalLink className="h-3 w-3 ml-auto opacity-50" />
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         
         <DropdownMenuItem asChild>
           <Link to={`/hosting/${service.id}`} onClick={onManage}>
