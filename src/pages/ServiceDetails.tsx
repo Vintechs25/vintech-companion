@@ -111,7 +111,7 @@ function StatusIndicator({ active }: { active: boolean }) {
 export default function ServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { openCyberPanel } = useCyberPanelSSO();
+  const { openWhmcsSso, isLoading: ssoLoading } = useCyberPanelSSO();
   const [service, setService] = useState<Service | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -121,8 +121,8 @@ export default function ServiceDetails() {
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
 
   const handleOpenCyberPanel = () => {
-    if (service?.panel_url) {
-      openCyberPanel(service.panel_url, service.username, service.domain);
+    if (service?.id) {
+      openWhmcsSso(service.id);
     }
   };
 
@@ -292,18 +292,17 @@ export default function ServiceDetails() {
           </div>
         </div>
 
-        {/* Primary CTA */}
-        {panelUrl && (
-          <Button 
-            size="lg" 
-            className="gap-2 w-full sm:w-auto"
-            onClick={handleOpenCyberPanel}
-          >
-            <Terminal className="h-4 w-4" />
-            Open CyberPanel
-            <ExternalLink className="h-3 w-3" />
-          </Button>
-        )}
+        {/* Primary CTA - Use WHMCS SSO */}
+        <Button 
+          size="lg" 
+          className="gap-2 w-full sm:w-auto"
+          onClick={handleOpenCyberPanel}
+          disabled={ssoLoading}
+        >
+          <Terminal className="h-4 w-4" />
+          Open Control Panel
+          <ExternalLink className="h-3 w-3" />
+        </Button>
       </div>
 
       {/* Main Content Grid */}

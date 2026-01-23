@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,12 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Rocket,
-  FolderOpen,
-  Database,
-  Mail,
-  Shield,
-  Globe,
-  Code,
   Terminal,
   ExternalLink,
   Loader2,
@@ -28,63 +21,9 @@ import { servicesApi, type Service } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCyberPanelSSO } from "@/hooks/useCyberPanelSSO";
 
-interface QuickLaunchItem {
-  id: string;
-  title: string;
-  description: string;
-  icon: React.ElementType;
-  path: string;
-}
-
-const quickLaunchItems: QuickLaunchItem[] = [
-  {
-    id: "filemanager",
-    title: "File Manager",
-    description: "Browse and edit files",
-    icon: FolderOpen,
-    path: "/filemanager",
-  },
-  {
-    id: "databases",
-    title: "Databases",
-    description: "MySQL/MariaDB",
-    icon: Database,
-    path: "/dataBases/listDatabases",
-  },
-  {
-    id: "email",
-    title: "Email Accounts",
-    description: "Manage email",
-    icon: Mail,
-    path: "/email/listEmails",
-  },
-  {
-    id: "ssl",
-    title: "SSL Certificates",
-    description: "HTTPS security",
-    icon: Shield,
-    path: "/manageSSL",
-  },
-  {
-    id: "dns",
-    title: "DNS Manager",
-    description: "DNS records",
-    icon: Globe,
-    path: "/dns/listDNS",
-  },
-  {
-    id: "php",
-    title: "PHP Settings",
-    description: "Configure PHP",
-    icon: Code,
-    path: "/websites/listWebsitesv2",
-  },
-];
-
 export function QuickLaunchDropdown() {
   const { user } = useAuth();
-  const { openCyberPanel, isLoading: ssoLoading } = useCyberPanelSSO();
-  const location = useLocation();
+  const { openWhmcsSso, isLoading: ssoLoading } = useCyberPanelSSO();
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
@@ -110,37 +49,9 @@ export function QuickLaunchDropdown() {
     }
   }, [isOpen, user?.userid, services.length]);
 
-  // Try to detect current service from URL
-  useEffect(() => {
-    const match = location.pathname.match(/\/hosting\/(\d+)/);
-    if (match && services.length > 0) {
-      const serviceId = parseInt(match[1]);
-      const found = services.find((s) => s.id === serviceId);
-      if (found) {
-        setSelectedService(found);
-      }
-    }
-  }, [location.pathname, services]);
-
-  const handleQuickLaunch = (item: QuickLaunchItem) => {
-    if (!selectedService?.panel_url) return;
-    
-    // Build the full URL path
-    let fullPath = item.path;
-    if (item.id === "filemanager") {
-      fullPath = `/filemanager/${selectedService.domain}`;
-    } else if (item.id === "ssl") {
-      fullPath = `/manageSSL/${selectedService.domain}`;
-    }
-    
-    const targetUrl = `${selectedService.panel_url}${fullPath}`;
-    openCyberPanel(targetUrl, selectedService.username, selectedService.domain);
-    setIsOpen(false);
-  };
-
   const handleOpenPanel = () => {
-    if (!selectedService?.panel_url) return;
-    openCyberPanel(selectedService.panel_url, selectedService.username, selectedService.domain);
+    if (!selectedService?.id) return;
+    openWhmcsSso(selectedService.id);
     setIsOpen(false);
   };
 
@@ -210,33 +121,14 @@ export function QuickLaunchDropdown() {
 
             <DropdownMenuSeparator />
 
-            {/* Quick Launch Items */}
-            <div className="grid grid-cols-2 gap-1 p-1">
-              {quickLaunchItems.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => handleQuickLaunch(item)}
-                  disabled={!selectedService || ssoLoading}
-                  className="flex flex-col items-center gap-1 rounded-lg p-3 text-center transition-colors hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
-                    <item.icon className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <span className="text-xs font-medium">{item.title}</span>
-                </button>
-              ))}
-            </div>
-
-            <DropdownMenuSeparator />
-
-            {/* Open Full Panel */}
+            {/* Open Full Panel via WHMCS SSO */}
             <DropdownMenuItem
               onClick={handleOpenPanel}
               disabled={!selectedService || ssoLoading}
               className="gap-2"
             >
               <Terminal className="h-4 w-4" />
-              <span>Open CyberPanel</span>
+              <span>Open Control Panel</span>
               <ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
             </DropdownMenuItem>
           </>
