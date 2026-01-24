@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Clock, LayoutDashboard } from "lucide-react";
+import { ArrowRight, Zap, Shield, Clock, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 const Hero = () => {
   const { isAuthenticated } = useAuth();
@@ -43,16 +44,16 @@ const Hero = () => {
             {isAuthenticated ? (
               <>
                 <Button size="lg" className="h-12 px-8" asChild>
-                  <Link to="/dashboard">
-                    <LayoutDashboard className="h-4 w-4 mr-2" />
-                    Go to Dashboard
-                  </Link>
+                  <a href={`${WHMCS_CONFIG.billingUrl}/clientarea.php`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Go to Client Area
+                  </a>
                 </Button>
                 <Button size="lg" variant="outline" className="h-12 px-8" asChild>
-                  <Link to="/order">
+                  <a href={`${WHMCS_CONFIG.billingUrl}/cart.php?a=add&pid=1`} target="_blank" rel="noopener noreferrer">
                     Order New Hosting
                     <ArrowRight className="h-4 w-4 ml-2" />
-                  </Link>
+                  </a>
                 </Button>
               </>
             ) : (
