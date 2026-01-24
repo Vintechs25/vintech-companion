@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Zap, AlertCircle, Shield, Clock } from "lucide-react";
+import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -39,10 +40,10 @@ export default function Login() {
   
   const { login } = useAuth();
   const { initiateGoogleLogin, isLoading: isGoogleLoading } = useGoogleAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
   
-  const from = location.state?.from?.pathname || "/dashboard";
+  
+  // Redirect to WHMCS client area after login
+  const whmcsClientArea = `${WHMCS_CONFIG.billingUrl}/clientarea.php`;
 
   const handleGoogleLogin = () => {
     setError("");
@@ -58,7 +59,8 @@ export default function Login() {
     const result = await login(email, password);
     
     if (result.success) {
-      navigate(from, { replace: true });
+      // Redirect to WHMCS client area
+      window.location.href = whmcsClientArea;
     } else {
       setError(result.error || "Login failed");
     }

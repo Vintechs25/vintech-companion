@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Zap, AlertCircle, CheckCircle } from "lucide-react";
+import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -73,7 +74,9 @@ export default function Register() {
   
   const { register } = useAuth();
   const { initiateGoogleLogin, isLoading: isGoogleLoading } = useGoogleAuth();
-  const navigate = useNavigate();
+  
+  // Redirect to WHMCS client area after registration
+  const whmcsClientArea = `${WHMCS_CONFIG.billingUrl}/clientarea.php`;
 
   const handleGoogleLogin = () => {
     setError("");
@@ -113,7 +116,8 @@ export default function Register() {
     });
     
     if (result.success) {
-      navigate("/dashboard", { replace: true });
+      // Redirect to WHMCS client area
+      window.location.href = whmcsClientArea;
     } else {
       setError(result.error || "Registration failed");
     }
