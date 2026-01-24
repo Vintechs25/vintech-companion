@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Zap, Mail } from "lucide-react";
+import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -17,8 +18,8 @@ const Footer = () => {
     Hosting: [
       { label: "Features", href: "#features", isAnchor: true },
       { label: "Pricing", href: "#pricing", isAnchor: true },
-      { label: "Order Hosting", href: "/order", isAnchor: false },
-      { label: "Client Area", href: "/login", isAnchor: false },
+      { label: "Order Hosting", href: `${WHMCS_CONFIG.billingUrl}/cart.php`, isExternal: true },
+      { label: "Client Area", href: `${WHMCS_CONFIG.billingUrl}/clientarea.php`, isExternal: true },
     ],
     Domains: [
       { label: "Domain Search", href: "/domains/search", isAnchor: false },
@@ -31,8 +32,8 @@ const Footer = () => {
       { label: "System Status", href: "#", isAnchor: true },
     ],
     Support: [
-      { label: "Open Ticket", href: "/tickets", isAnchor: false },
-      { label: "Contact Us", href: "/tickets", isAnchor: false },
+      { label: "Contact Us", href: "/contact", isAnchor: false },
+      { label: "Open Ticket", href: `${WHMCS_CONFIG.billingUrl}/submitticket.php`, isExternal: true },
     ],
   };
 
@@ -74,6 +75,15 @@ const Footer = () => {
                       >
                         {link.label}
                       </button>
+                    ) : link.isExternal ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {link.label}
+                      </a>
                     ) : (
                       <Link
                         to={link.href}

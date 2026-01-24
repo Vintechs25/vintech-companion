@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Rocket, CheckCircle, LayoutDashboard, Plus } from "lucide-react";
+import { ArrowRight, Rocket, CheckCircle, ExternalLink, Plus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 const CTA = () => {
   const { isAuthenticated } = useAuth();
@@ -58,10 +59,10 @@ const CTA = () => {
                   className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg px-8 py-6 h-auto shadow-xl transition-all hover:scale-105"
                   asChild
                 >
-                  <Link to="/dashboard">
-                    <LayoutDashboard className="w-5 h-5 mr-2" />
-                    Go to Dashboard
-                  </Link>
+                  <a href={`${WHMCS_CONFIG.billingUrl}/clientarea.php`} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="w-5 h-5 mr-2" />
+                    Go to Client Area
+                  </a>
                 </Button>
                 <Button 
                   size="lg" 
@@ -69,10 +70,10 @@ const CTA = () => {
                   className="border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-lg px-8 py-6 h-auto"
                   asChild
                 >
-                  <Link to="/order">
+                  <a href={`${WHMCS_CONFIG.billingUrl}/cart.php?a=add&pid=1`} target="_blank" rel="noopener noreferrer">
                     <Plus className="w-5 h-5 mr-2" />
-                    New Project
-                  </Link>
+                    Order Hosting
+                  </a>
                 </Button>
               </>
             ) : (
@@ -93,7 +94,7 @@ const CTA = () => {
                   className="border-2 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-lg px-8 py-6 h-auto"
                   asChild
                 >
-                  <Link to="/tickets">Contact Sales</Link>
+                  <Link to="/contact">Contact Sales</Link>
                 </Button>
               </>
             )}

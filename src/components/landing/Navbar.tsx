@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Server, LayoutDashboard } from "lucide-react";
+import { Menu, X, Server, ExternalLink } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,6 +14,7 @@ const Navbar = () => {
     { href: "#pricing", label: "Pricing", isAnchor: true },
     { href: "/domains/search", label: "Domains", isAnchor: false },
     { href: "#faq", label: "FAQ", isAnchor: true },
+    { href: "/contact", label: "Contact", isAnchor: false },
   ];
 
   const scrollToSection = (href: string) => {
@@ -62,10 +64,10 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-2">
             {isAuthenticated ? (
               <Button size="sm" asChild>
-                <Link to="/dashboard">
-                  <LayoutDashboard className="h-4 w-4 mr-2" />
-                  Dashboard
-                </Link>
+                <a href={`${WHMCS_CONFIG.billingUrl}/clientarea.php`} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Client Area
+                </a>
               </Button>
             ) : (
               <>
@@ -116,10 +118,10 @@ const Navbar = () => {
               <div className="flex gap-2 pt-4 mt-2 border-t border-border">
                 {isAuthenticated ? (
                   <Button size="sm" className="flex-1" asChild>
-                    <Link to="/dashboard">
-                      <LayoutDashboard className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </Link>
+                    <a href={`${WHMCS_CONFIG.billingUrl}/clientarea.php`} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Client Area
+                    </a>
                   </Button>
                 ) : (
                   <>
