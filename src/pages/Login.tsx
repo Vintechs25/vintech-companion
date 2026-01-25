@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Zap, AlertCircle, Shield, Clock } from "lucide-react";
 import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 import { RedirectOverlay } from "@/components/RedirectOverlay";
@@ -35,6 +36,7 @@ const GoogleIcon = () => (
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -77,6 +79,15 @@ export default function Login() {
         passwordField.name = "password";
         passwordField.value = password;
         form.appendChild(passwordField);
+        
+        // Add remember me field if checked
+        if (rememberMe) {
+          const rememberField = document.createElement("input");
+          rememberField.type = "hidden";
+          rememberField.name = "rememberme";
+          rememberField.value = "on";
+          form.appendChild(rememberField);
+        }
         
         document.body.appendChild(form);
         form.submit();
@@ -153,6 +164,21 @@ export default function Login() {
                     disabled={isLoading}
                     className="h-11"
                   />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="remember"
+                    checked={rememberMe}
+                    onCheckedChange={(checked) => setRememberMe(checked === true)}
+                    disabled={isLoading}
+                  />
+                  <Label 
+                    htmlFor="remember" 
+                    className="text-sm font-normal text-muted-foreground cursor-pointer"
+                  >
+                    Remember me for 30 days
+                  </Label>
                 </div>
               </CardContent>
               
