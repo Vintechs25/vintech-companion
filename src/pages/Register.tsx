@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,14 +72,11 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   
   const { register } = useAuth();
-  const { initiateGoogleLogin, isLoading: isGoogleLoading } = useGoogleAuth();
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
-  // Redirect to WHMCS client area after registration
-  const whmcsClientArea = `${WHMCS_CONFIG.billingUrl}/clientarea.php`;
-
   const handleGoogleLogin = () => {
-    setError("");
-    initiateGoogleLogin();
+    // Redirect to WHMCS Google OAuth directly
+    window.location.href = `${WHMCS_CONFIG.billingUrl}/login.php?oauth=google`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,13 +112,29 @@ export default function Register() {
     });
     
     if (result.success) {
-      // Redirect to WHMCS client area
-      window.location.href = whmcsClientArea;
+      // After successful registration, log them into WHMCS directly
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = `${WHMCS_CONFIG.billingUrl}/dologin.php`;
+      
+      const emailField = document.createElement("input");
+      emailField.type = "hidden";
+      emailField.name = "username";
+      emailField.value = email;
+      form.appendChild(emailField);
+      
+      const passwordField = document.createElement("input");
+      passwordField.type = "hidden";
+      passwordField.name = "password";
+      passwordField.value = password;
+      form.appendChild(passwordField);
+      
+      document.body.appendChild(form);
+      form.submit();
     } else {
       setError(result.error || "Registration failed");
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   const benefits = [

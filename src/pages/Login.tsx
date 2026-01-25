@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGoogleAuth } from "@/hooks/useGoogleAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,16 +38,11 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   
   const { login } = useAuth();
-  const { initiateGoogleLogin, isLoading: isGoogleLoading } = useGoogleAuth();
-  
-  
-  // Redirect to WHMCS client area after login
-  const whmcsClientArea = `${WHMCS_CONFIG.billingUrl}/clientarea.php`;
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   const handleGoogleLogin = () => {
-    setError("");
-    // The hook handles the popup and page reload after completion
-    initiateGoogleLogin();
+    // Redirect to WHMCS Google OAuth directly
+    window.location.href = `${WHMCS_CONFIG.billingUrl}/login.php?oauth=google`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,13 +53,30 @@ export default function Login() {
     const result = await login(email, password);
     
     if (result.success) {
-      // Redirect to WHMCS client area
-      window.location.href = whmcsClientArea;
+      // Redirect to WHMCS login with auto-login via dologin action
+      // This establishes a proper WHMCS session
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = `${WHMCS_CONFIG.billingUrl}/dologin.php`;
+      
+      const emailField = document.createElement("input");
+      emailField.type = "hidden";
+      emailField.name = "username";
+      emailField.value = email;
+      form.appendChild(emailField);
+      
+      const passwordField = document.createElement("input");
+      passwordField.type = "hidden";
+      passwordField.name = "password";
+      passwordField.value = password;
+      form.appendChild(passwordField);
+      
+      document.body.appendChild(form);
+      form.submit();
     } else {
       setError(result.error || "Login failed");
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
