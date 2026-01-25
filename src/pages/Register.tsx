@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Zap, AlertCircle, CheckCircle } from "lucide-react";
 import { WHMCS_CONFIG } from "@/lib/whmcs-config";
+import { RedirectOverlay } from "@/components/RedirectOverlay";
 
 const GoogleIcon = () => (
   <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -70,11 +71,12 @@ export default function Register() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   
   const { register } = useAuth();
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   const handleGoogleLogin = () => {
+    setIsRedirecting(true);
     // Redirect to WHMCS Google OAuth directly
     window.location.href = `${WHMCS_CONFIG.billingUrl}/login.php?oauth=google`;
   };
@@ -112,25 +114,31 @@ export default function Register() {
     });
     
     if (result.success) {
-      // After successful registration, log them into WHMCS directly
-      const form = document.createElement("form");
-      form.method = "POST";
-      form.action = `${WHMCS_CONFIG.billingUrl}/dologin.php`;
+      // Show redirect overlay
+      setIsRedirecting(true);
       
-      const emailField = document.createElement("input");
-      emailField.type = "hidden";
-      emailField.name = "username";
-      emailField.value = email;
-      form.appendChild(emailField);
-      
-      const passwordField = document.createElement("input");
-      passwordField.type = "hidden";
-      passwordField.name = "password";
-      passwordField.value = password;
-      form.appendChild(passwordField);
-      
-      document.body.appendChild(form);
-      form.submit();
+      // Small delay for visual feedback before redirect
+      setTimeout(() => {
+        // After successful registration, log them into WHMCS directly
+        const form = document.createElement("form");
+        form.method = "POST";
+        form.action = `${WHMCS_CONFIG.billingUrl}/dologin.php`;
+        
+        const emailField = document.createElement("input");
+        emailField.type = "hidden";
+        emailField.name = "username";
+        emailField.value = email;
+        form.appendChild(emailField);
+        
+        const passwordField = document.createElement("input");
+        passwordField.type = "hidden";
+        passwordField.name = "password";
+        passwordField.value = password;
+        form.appendChild(passwordField);
+        
+        document.body.appendChild(form);
+        form.submit();
+      }, 500);
     } else {
       setError(result.error || "Registration failed");
       setIsLoading(false);
@@ -145,7 +153,9 @@ export default function Register() {
   ];
 
   return (
-    <div className="min-h-screen flex">
+    <>
+      {isRedirecting && <RedirectOverlay message="Creating your account..." />}
+      <div className="min-h-screen flex">
       {/* Left side - Feature showcase */}
       <div className="hidden lg:flex flex-1 gradient-dark items-center justify-center p-12 relative overflow-hidden">
         {/* Background orbs */}
@@ -416,7 +426,7 @@ export default function Register() {
                 <Button 
                   type="submit" 
                   className="w-full gradient-primary hover:opacity-90 h-11 text-base shadow-lg shadow-primary/25"
-                  disabled={isLoading || isGoogleLoading}
+                  disabled={isLoading || isRedirecting}
                 >
                   {isLoading ? (
                     <>
@@ -442,9 +452,9 @@ export default function Register() {
                   variant="outline"
                   className="w-full h-11"
                   onClick={handleGoogleLogin}
-                  disabled={isLoading || isGoogleLoading}
+                  disabled={isLoading || isRedirecting}
                 >
-                  {isGoogleLoading ? (
+                  {isRedirecting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <GoogleIcon />
@@ -469,6 +479,7 @@ export default function Register() {
           </p>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }
