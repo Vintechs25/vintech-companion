@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Server, ExternalLink, LogOut } from "lucide-react";
+import { Menu, X, Server, ExternalLink, LogOut, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { WHMCS_CONFIG } from "@/lib/whmcs-config";
+import { useWhmcsSso } from "@/hooks/useWhmcsSso";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, logout, user } = useAuth();
+  const { redirectToClientArea, isLoading: ssoLoading } = useWhmcsSso();
 
   const navLinks = [
     { href: "#features", label: "Features", isAnchor: true },
@@ -23,6 +24,12 @@ const Navbar = () => {
       element.scrollIntoView({ behavior: "smooth" });
     }
     setIsOpen(false);
+  };
+
+  const handleClientAreaClick = async () => {
+    if (user?.email) {
+      await redirectToClientArea(user.email, user.userid);
+    }
   };
 
   return (
@@ -64,11 +71,13 @@ const Navbar = () => {
           <div className="hidden md:flex items-center gap-2">
             {isAuthenticated ? (
               <>
-                <Button size="sm" asChild>
-                  <Link to="/login">
+                <Button size="sm" onClick={handleClientAreaClick} disabled={ssoLoading}>
+                  {ssoLoading ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    Client Area
-                  </Link>
+                  )}
+                  Client Area
                 </Button>
                 <Button size="sm" variant="ghost" onClick={logout}>
                   <LogOut className="h-4 w-4 mr-2" />
@@ -124,11 +133,13 @@ const Navbar = () => {
               <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-border">
                 {isAuthenticated ? (
                   <>
-                    <Button size="sm" className="w-full" asChild>
-                      <Link to="/login">
+                    <Button size="sm" className="w-full" onClick={handleClientAreaClick} disabled={ssoLoading}>
+                      {ssoLoading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        Client Area
-                      </Link>
+                      )}
+                      Client Area
                     </Button>
                     <Button size="sm" variant="outline" className="w-full" onClick={() => { logout(); setIsOpen(false); }}>
                       <LogOut className="h-4 w-4 mr-2" />

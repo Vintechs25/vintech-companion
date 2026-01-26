@@ -1,11 +1,19 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Rocket, CheckCircle, ExternalLink, Plus } from "lucide-react";
+import { ArrowRight, Rocket, CheckCircle, ExternalLink, Plus, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWhmcsSso } from "@/hooks/useWhmcsSso";
 import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 const CTA = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const { redirectToClientArea, isLoading: ssoLoading } = useWhmcsSso();
+
+  const handleClientAreaClick = async () => {
+    if (user?.email) {
+      await redirectToClientArea(user.email, user.userid);
+    }
+  };
 
   return (
     <section className="py-24 relative overflow-hidden">
@@ -57,12 +65,15 @@ const CTA = () => {
                 <Button 
                   size="lg" 
                   className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg px-8 py-6 h-auto shadow-xl transition-all hover:scale-105"
-                  asChild
+                  onClick={handleClientAreaClick}
+                  disabled={ssoLoading}
                 >
-                  <Link to="/login">
+                  {ssoLoading ? (
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  ) : (
                     <ExternalLink className="w-5 h-5 mr-2" />
-                    Go to Client Area
-                  </Link>
+                  )}
+                  Go to Client Area
                 </Button>
                 <Button 
                   size="lg" 
