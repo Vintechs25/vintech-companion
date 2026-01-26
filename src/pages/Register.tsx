@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -73,8 +72,6 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   
-  const { register } = useAuth();
-  
   const handleGoogleLogin = () => {
     setIsRedirecting(true);
     // Redirect to WHMCS Google OAuth directly
@@ -102,45 +99,64 @@ export default function Register() {
 
     setIsLoading(true);
 
-    const result = await register(email, password, firstname, lastname, {
-      phonenumber,
-      companyname,
-      address1,
-      address2,
-      city,
-      state,
-      postcode,
-      country,
-    });
-    
-    if (result.success) {
-      // Show redirect overlay
-      setIsRedirecting(true);
+    try {
+      const response = await fetch("https://vintechdev.store/api/whmcs.php", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          action: "AddClient",
+          firstname,
+          lastname,
+          email,
+          password2: password,
+          phonenumber,
+          companyname,
+          address1,
+          address2,
+          city,
+          state,
+          postcode,
+          country,
+        }),
+      });
       
-      // Small delay for visual feedback before redirect
-      setTimeout(() => {
-        // After successful registration, log them into WHMCS directly
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = `${WHMCS_CONFIG.billingUrl}/dologin.php`;
+      const data = await response.json();
+      
+      if (data.result === "success") {
+        // Show redirect overlay
+        setIsRedirecting(true);
         
-        const emailField = document.createElement("input");
-        emailField.type = "hidden";
-        emailField.name = "username";
-        emailField.value = email;
-        form.appendChild(emailField);
-        
-        const passwordField = document.createElement("input");
-        passwordField.type = "hidden";
-        passwordField.name = "password";
-        passwordField.value = password;
-        form.appendChild(passwordField);
-        
-        document.body.appendChild(form);
-        form.submit();
-      }, 500);
-    } else {
-      setError(result.error || "Registration failed");
+        // Small delay for visual feedback before redirect
+        setTimeout(() => {
+          // After successful registration, log them into WHMCS directly
+          const form = document.createElement("form");
+          form.method = "POST";
+          form.action = `${WHMCS_CONFIG.billingUrl}/dologin.php`;
+          
+          const emailField = document.createElement("input");
+          emailField.type = "hidden";
+          emailField.name = "username";
+          emailField.value = email;
+          form.appendChild(emailField);
+          
+          const passwordField = document.createElement("input");
+          passwordField.type = "hidden";
+          passwordField.name = "password";
+          passwordField.value = password;
+          form.appendChild(passwordField);
+          
+          document.body.appendChild(form);
+          form.submit();
+        }, 500);
+      } else {
+        setError(data.message || data.error || "Registration failed. Please try again.");
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error("Register error:", error);
+      setError("An error occurred. Please try again.");
       setIsLoading(false);
     }
   };
