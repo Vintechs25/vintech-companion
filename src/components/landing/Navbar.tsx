@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Server, ExternalLink } from "lucide-react";
+import { Menu, X, Server, ExternalLink, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { WHMCS_CONFIG } from "@/lib/whmcs-config";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout } = useAuth();
 
   const navLinks = [
     { href: "#features", label: "Features", isAnchor: true },
@@ -63,12 +63,18 @@ const Navbar = () => {
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-2">
             {isAuthenticated ? (
-              <Button size="sm" asChild>
-                <a href={`${WHMCS_CONFIG.billingUrl}/clientarea.php`} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Client Area
-                </a>
-              </Button>
+              <>
+                <Button size="sm" asChild>
+                  <Link to="/login">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Client Area
+                  </Link>
+                </Button>
+                <Button size="sm" variant="ghost" onClick={logout}>
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
             ) : (
               <>
                 <Button variant="ghost" size="sm" asChild>
@@ -115,23 +121,29 @@ const Navbar = () => {
                   </Link>
                 )
               )}
-              <div className="flex gap-2 pt-4 mt-2 border-t border-border">
+              <div className="flex flex-col gap-2 pt-4 mt-2 border-t border-border">
                 {isAuthenticated ? (
-                  <Button size="sm" className="flex-1" asChild>
-                    <a href={`${WHMCS_CONFIG.billingUrl}/clientarea.php`} target="_blank" rel="noopener noreferrer">
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Client Area
-                    </a>
-                  </Button>
-                ) : (
                   <>
+                    <Button size="sm" className="w-full" asChild>
+                      <Link to="/login">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Client Area
+                      </Link>
+                    </Button>
+                    <Button size="sm" variant="outline" className="w-full" onClick={() => { logout(); setIsOpen(false); }}>
+                      <LogOut className="h-4 w-4 mr-2" />
+                      Sign Out
+                    </Button>
+                  </>
+                ) : (
+                  <div className="flex gap-2">
                     <Button variant="outline" size="sm" className="flex-1" asChild>
                       <Link to="/login">Sign In</Link>
                     </Button>
                     <Button size="sm" className="flex-1" asChild>
                       <Link to="/register">Get Started</Link>
                     </Button>
-                  </>
+                  </div>
                 )}
               </div>
             </div>

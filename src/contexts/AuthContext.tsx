@@ -29,6 +29,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const STORAGE_KEY = "vintech_userid";
+const EMAIL_STORAGE_KEY = "vintech_email";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -37,8 +38,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Check for existing session on mount
   useEffect(() => {
     const storedUserId = localStorage.getItem(STORAGE_KEY);
+    const storedEmail = localStorage.getItem(EMAIL_STORAGE_KEY);
     if (storedUserId) {
-      setUser({ userid: parseInt(storedUserId, 10) });
+      setUser({ userid: parseInt(storedUserId, 10), email: storedEmail || undefined });
     }
     setIsLoading(false);
   }, []);
@@ -49,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       if (response.result === "success" && response.userid) {
         localStorage.setItem(STORAGE_KEY, response.userid.toString());
+        localStorage.setItem(EMAIL_STORAGE_KEY, email);
         setUser({ userid: response.userid, email });
         return { success: true };
       }
@@ -96,6 +99,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(EMAIL_STORAGE_KEY);
     setUser(null);
   }, []);
 

@@ -59,10 +59,10 @@ const CTA = () => {
                   className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 text-lg px-8 py-6 h-auto shadow-xl transition-all hover:scale-105"
                   asChild
                 >
-                  <a href={`${WHMCS_CONFIG.billingUrl}/clientarea.php`} target="_blank" rel="noopener noreferrer">
+                  <Link to="/login">
                     <ExternalLink className="w-5 h-5 mr-2" />
                     Go to Client Area
-                  </a>
+                  </Link>
                 </Button>
                 <Button 
                   size="lg" 
