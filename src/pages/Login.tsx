@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWhmcsSso } from "@/hooks/useWhmcsSso";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,7 +35,9 @@ const GoogleIcon = () => (
 );
 
 export default function Login() {
+  const navigate = useNavigate();
   const { login, user, isAuthenticated } = useAuth();
+  const { redirectToClientArea, isLoading: ssoLoading } = useWhmcsSso();
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -67,38 +70,14 @@ export default function Login() {
       // Show redirect overlay
       setIsRedirecting(true);
       
-      // Small delay for visual feedback before redirect
-      setTimeout(() => {
-        // Redirect to WHMCS login with auto-login via dologin action
-        // This establishes a proper WHMCS session
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = `${WHMCS_CONFIG.billingUrl}/dologin.php`;
-        
-        const emailField = document.createElement("input");
-        emailField.type = "hidden";
-        emailField.name = "username";
-        emailField.value = email;
-        form.appendChild(emailField);
-        
-        const passwordField = document.createElement("input");
-        passwordField.type = "hidden";
-        passwordField.name = "password";
-        passwordField.value = password;
-        form.appendChild(passwordField);
-        
-        // Add remember me field if checked
-        if (rememberMe) {
-          const rememberField = document.createElement("input");
-          rememberField.type = "hidden";
-          rememberField.name = "rememberme";
-          rememberField.value = "on";
-          form.appendChild(rememberField);
-        }
-        
-        document.body.appendChild(form);
-        form.submit();
-      }, 500);
+      // Use SSO to redirect to WHMCS client area
+      const success = await redirectToClientArea(email);
+      
+      if (!success) {
+        // If SSO fails, redirect to home and show success
+        setIsRedirecting(false);
+        navigate("/");
+      }
     } else {
       setError(result.error || "Login failed");
       setIsLoading(false);

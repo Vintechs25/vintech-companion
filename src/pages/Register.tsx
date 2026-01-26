@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useWhmcsSso } from "@/hooks/useWhmcsSso";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +57,10 @@ const COUNTRIES = [
 ];
 
 export default function Register() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const { redirectToClientArea } = useWhmcsSso();
+  
   const [firstname, setFirstname] = useState("");
   const [lastname, setLastname] = useState("");
   const [email, setEmail] = useState("");
@@ -125,31 +131,20 @@ export default function Register() {
       const data = await response.json();
       
       if (data.result === "success") {
+        // Store session locally
+        await login(email, password);
+        
         // Show redirect overlay
         setIsRedirecting(true);
         
-        // Small delay for visual feedback before redirect
-        setTimeout(() => {
-          // After successful registration, log them into WHMCS directly
-          const form = document.createElement("form");
-          form.method = "POST";
-          form.action = `${WHMCS_CONFIG.billingUrl}/dologin.php`;
-          
-          const emailField = document.createElement("input");
-          emailField.type = "hidden";
-          emailField.name = "username";
-          emailField.value = email;
-          form.appendChild(emailField);
-          
-          const passwordField = document.createElement("input");
-          passwordField.type = "hidden";
-          passwordField.name = "password";
-          passwordField.value = password;
-          form.appendChild(passwordField);
-          
-          document.body.appendChild(form);
-          form.submit();
-        }, 500);
+        // Use SSO to redirect to WHMCS client area
+        const success = await redirectToClientArea(email);
+        
+        if (!success) {
+          // If SSO fails, redirect to home
+          setIsRedirecting(false);
+          navigate("/");
+        }
       } else {
         setError(data.message || data.error || "Registration failed. Please try again.");
         setIsLoading(false);
