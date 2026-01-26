@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -34,14 +34,21 @@ const GoogleIcon = () => (
 );
 
 export default function Login() {
+  const { login, user, isAuthenticated } = useAuth();
+  
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  
-  const { login } = useAuth();
+
+  // Pre-fill email if user is authenticated
+  React.useEffect(() => {
+    if (isAuthenticated && user?.email) {
+      setEmail(user.email);
+    }
+  }, [isAuthenticated, user?.email]);
 
   const handleGoogleLogin = () => {
     setIsRedirecting(true);
@@ -115,9 +122,13 @@ export default function Login() {
 
           <Card className="border-border/50 shadow-2xl">
             <CardHeader className="text-center pb-2">
-              <CardTitle className="text-2xl">Welcome back</CardTitle>
+              <CardTitle className="text-2xl">
+                {isAuthenticated ? "Access Client Area" : "Welcome back"}
+              </CardTitle>
               <CardDescription>
-                Sign in to your account to continue
+                {isAuthenticated 
+                  ? "Enter your password to access the client area"
+                  : "Sign in to your account to continue"}
               </CardDescription>
             </CardHeader>
             
