@@ -21,8 +21,8 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  register: (email: string, password: string, firstname: string, lastname: string, billing: BillingAddress) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; userid?: number; error?: string }>;
+  register: (email: string, password: string, firstname: string, lastname: string, billing: BillingAddress) => Promise<{ success: boolean; userid?: number; error?: string }>;
   logout: () => void;
 }
 
@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(STORAGE_KEY, response.userid.toString());
         localStorage.setItem(EMAIL_STORAGE_KEY, email);
         setUser({ userid: response.userid, email });
-        return { success: true };
+        return { success: true, userid: response.userid };
       }
       
       return { 

@@ -66,15 +66,23 @@ export default function Login() {
 
     const result = await login(email, password);
     
-    if (result.success) {
+    if (result.success && result.userid) {
       // Show redirect overlay
       setIsRedirecting(true);
       
-      // Use SSO to redirect to WHMCS client area
-      const success = await redirectToClientArea(email);
+      // Use SSO to redirect to WHMCS client area - pass userid directly
+      const success = await redirectToClientArea(email, result.userid);
       
       if (!success) {
         // If SSO fails, redirect to home and show success
+        setIsRedirecting(false);
+        navigate("/");
+      }
+    } else if (result.success) {
+      // Fallback if userid not returned
+      setIsRedirecting(true);
+      const success = await redirectToClientArea(email);
+      if (!success) {
         setIsRedirecting(false);
         navigate("/");
       }
