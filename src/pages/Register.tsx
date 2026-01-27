@@ -137,8 +137,8 @@ export default function Register() {
         // Show redirect overlay
         setIsRedirecting(true);
         
-        // Use SSO to redirect to WHMCS client area
-        const success = await redirectToClientArea(email);
+        // Use SSO to redirect to WHMCS client area - pass clientid directly to avoid lookup
+        const success = await redirectToClientArea(email, data.clientid);
         
         if (!success) {
           // If SSO fails, redirect to home
