@@ -48,10 +48,14 @@ export function useWhmcsSso() {
 
   const redirectToClientArea = useCallback(async (email: string, userid?: number) => {
     const url = await getSsoUrl({ email, userid, destination: "clientarea:home" });
+    console.log("SSO redirect URL:", url);
     if (url) {
+      // Redirect immediately - SSO tokens are single-use and expire quickly
+      console.log("Redirecting to WHMCS SSO...");
       window.location.href = url;
       return true;
     }
+    console.error("No SSO URL received");
     return false;
   }, [getSsoUrl]);
 
