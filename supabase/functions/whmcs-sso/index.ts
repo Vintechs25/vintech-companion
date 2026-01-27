@@ -23,42 +23,27 @@ serve(async (req) => {
       );
     }
 
-    // Get WHMCS API credentials from environment
-    const whmcsUrl = Deno.env.get("WHMCS_API_URL");
-    const whmcsIdentifier = Deno.env.get("WHMCS_API_IDENTIFIER");
-    const whmcsSecret = Deno.env.get("WHMCS_API_SECRET");
+    // Use the PHP bridge which has the correct IP allowlisted
+    const bridgeUrl = "https://vintechdev.store/api/whmcs.php";
 
-    if (!whmcsUrl || !whmcsIdentifier || !whmcsSecret) {
-      console.error("WHMCS API credentials not configured");
-      return new Response(
-        JSON.stringify({ error: "WHMCS API not configured" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // If we only have email, first get the user ID
+    // If we only have email, first get the user ID via the bridge
     let clientId = userid;
     
     if (!clientId && email) {
-      // Get client details by email
-      const getClientsParams = new URLSearchParams({
-        action: "GetClients",
-        identifier: whmcsIdentifier,
-        secret: whmcsSecret,
-        search: email,
-        responsetype: "json",
-      });
-
-      const clientsResponse = await fetch(whmcsUrl, {
+      const getClientsResponse = await fetch(bridgeUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: getClientsParams.toString(),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "GetClients",
+          search: email,
+          responsetype: "json",
+        }),
       });
 
-      const clientsData = await clientsResponse.json();
+      const clientsData = await getClientsResponse.json();
+      console.log("GetClients response:", JSON.stringify(clientsData));
       
       if (clientsData.result === "success" && clientsData.clients?.client?.length > 0) {
-        // Find exact email match
         const client = clientsData.clients.client.find(
           (c: { email: string }) => c.email.toLowerCase() === email.toLowerCase()
         );
@@ -75,23 +60,20 @@ serve(async (req) => {
       }
     }
 
-    // Create SSO token using WHMCS API
-    const ssoParams = new URLSearchParams({
-      action: "CreateSsoToken",
-      identifier: whmcsIdentifier,
-      secret: whmcsSecret,
-      client_id: clientId.toString(),
-      destination: destination || "clientarea:home",
-      responsetype: "json",
-    });
-
-    const ssoResponse = await fetch(whmcsUrl, {
+    // Create SSO token via the bridge
+    const ssoResponse = await fetch(bridgeUrl, {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: ssoParams.toString(),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "CreateSsoToken",
+        client_id: clientId.toString(),
+        destination: destination || "clientarea:home",
+        responsetype: "json",
+      }),
     });
 
     const ssoData = await ssoResponse.json();
+    console.log("CreateSsoToken response:", JSON.stringify(ssoData));
 
     if (ssoData.result === "success" && ssoData.redirect_url) {
       return new Response(
