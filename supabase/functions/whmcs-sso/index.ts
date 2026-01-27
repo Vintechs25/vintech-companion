@@ -12,7 +12,9 @@ serve(async (req) => {
   }
 
   try {
-    const { email, userid, destination } = await req.json();
+    const body = await req.json();
+    const { email, userid, destination } = body;
+    console.log("SSO Request received:", JSON.stringify({ email, userid, destination }));
 
     if (!email && !userid) {
       return new Response(
