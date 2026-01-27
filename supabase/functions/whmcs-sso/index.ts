@@ -61,15 +61,23 @@ serve(async (req) => {
     }
 
     // Create SSO token via the bridge
+    // Note: destination can be empty to default to clientarea, or a specific sso_destination like "clientarea:services"
+    const ssoBody: Record<string, string> = {
+      action: "CreateSsoToken",
+      client_id: clientId.toString(),
+      responsetype: "json",
+    };
+    
+    // Only add destination if it's a valid WHMCS SSO destination
+    // Valid destinations: empty (defaults to clientarea), or specific pages
+    if (destination && destination !== "clientarea:home") {
+      ssoBody.destination = destination;
+    }
+    
     const ssoResponse = await fetch(bridgeUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "CreateSsoToken",
-        client_id: clientId.toString(),
-        destination: destination || "clientarea:home",
-        responsetype: "json",
-      }),
+      body: JSON.stringify(ssoBody),
     });
 
     const ssoData = await ssoResponse.json();
