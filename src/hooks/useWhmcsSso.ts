@@ -39,7 +39,7 @@ export function useWhmcsSso() {
       return null;
     } catch (err) {
       console.error("SSO error:", err);
-      setError("Failed to connect to WHMCS");
+      setError("Failed to connect to billing system");
       return null;
     } finally {
       setIsLoading(false);
