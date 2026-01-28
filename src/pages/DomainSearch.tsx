@@ -197,7 +197,7 @@ export default function DomainSearch() {
               <div className="text-center mb-12">
                 <h2 className="text-2xl font-bold mb-2">Domain Pricing</h2>
                 <p className="text-muted-foreground">
-                  {isPricingLoading ? "Loading latest prices..." : "Live prices from WHMCS"}
+                  {isPricingLoading ? "Loading latest prices..." : "Live pricing updated daily"}
                 </p>
               </div>
               
