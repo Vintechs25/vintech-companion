@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 
 // This URL should redirect to Google OAuth automatically
-const WHMCS_GOOGLE_LOGIN_URL = "https://billing.vintechdev.store/login.php?oauth=google";
+const GOOGLE_LOGIN_URL = "https://billing.vintechdev.store/login.php?oauth=google";
 
 export function useGoogleAuth() {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,7 +16,7 @@ export function useGoogleAuth() {
     const top = (window.screen.height - height) / 2;
 
     popupRef.current = window.open(
-      WHMCS_GOOGLE_LOGIN_URL,
+      GOOGLE_LOGIN_URL,
       "googleLogin",
       `width=${width},height=${height},top=${top},left=${left},scrollbars=yes`
     );

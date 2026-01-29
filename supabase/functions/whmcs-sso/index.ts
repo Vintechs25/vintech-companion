@@ -54,7 +54,7 @@ serve(async (req) => {
 
       if (!clientId) {
         return new Response(
-          JSON.stringify({ error: "User not found in WHMCS" }),
+          JSON.stringify({ error: "User not found in billing system" }),
           { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
@@ -68,7 +68,7 @@ serve(async (req) => {
       responsetype: "json",
     };
     
-    // Only add destination if it's a valid WHMCS SSO destination
+    // Only add destination if it's a valid SSO destination
     // Valid destinations: empty (defaults to clientarea), or specific pages
     if (destination && destination !== "clientarea:home") {
       ssoBody.destination = destination;
@@ -92,7 +92,7 @@ serve(async (req) => {
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     } else {
-      console.error("WHMCS SSO error:", ssoData);
+      console.error("SSO error:", ssoData);
       return new Response(
         JSON.stringify({ 
           error: ssoData.message || "Failed to create SSO token" 

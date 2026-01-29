@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
-const WHMCS_API_URL = "https://vintechdev.store/api/whmcs.php";
+const API_URL = "https://vintechdev.store/api/whmcs.php";
 
 export default function AuthCallback() {
   const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
@@ -46,8 +46,8 @@ export default function AuthCallback() {
       }
 
       try {
-        // Exchange code for user info via WHMCS
-        const response = await fetch(WHMCS_API_URL, {
+        // Exchange code for user info via billing API
+        const response = await fetch(API_URL, {
           method: "POST",
           headers: {
             "Content-Type": "application/x-www-form-urlencoded",
