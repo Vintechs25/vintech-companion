@@ -1,7 +1,7 @@
-// WHMCS Configuration
-// Update these values to match your WHMCS setup
+// Billing System Configuration
+// Update these values to match your billing setup
 
-export const WHMCS_CONFIG = {
+export const BILLING_CONFIG = {
   // Base URLs
   billingUrl: "https://billing.vintechdev.store",
   
@@ -9,7 +9,7 @@ export const WHMCS_CONFIG = {
   currency: "KES",
   currencySymbol: "KES",
   
-  // Product IDs - Update these to match your WHMCS Products/Services
+  // Product IDs - Update these to match your Products/Services
   products: {
     basic: {
       pid: 1,
@@ -83,7 +83,7 @@ export const WHMCS_CONFIG = {
     },
   },
 
-  // Department IDs - Update these to match your WHMCS Support Departments
+  // Department IDs - Update these to match your Support Departments
   departments: {
     sales: { id: 1, name: "Sales" },
     technical: { id: 2, name: "Technical Support" },
@@ -108,17 +108,20 @@ export const WHMCS_CONFIG = {
   priorities: ["Low", "Medium", "High", "Urgent"],
 } as const;
 
+// Backward compatibility alias
+export const WHMCS_CONFIG = BILLING_CONFIG;
+
 // Helper functions
 export function getProductById(productKey: string) {
-  return WHMCS_CONFIG.products[productKey as keyof typeof WHMCS_CONFIG.products];
+  return BILLING_CONFIG.products[productKey as keyof typeof BILLING_CONFIG.products];
 }
 
 export function getDepartmentById(deptKey: string) {
-  return WHMCS_CONFIG.departments[deptKey as keyof typeof WHMCS_CONFIG.departments];
+  return BILLING_CONFIG.departments[deptKey as keyof typeof BILLING_CONFIG.departments];
 }
 
 export function getProductPrice(productKey: string, billingCycle: string): number {
-  const product = WHMCS_CONFIG.products[productKey as keyof typeof WHMCS_CONFIG.products];
+  const product = BILLING_CONFIG.products[productKey as keyof typeof BILLING_CONFIG.products];
   if (!product) return 0;
   
   if (billingCycle === "annually") {
@@ -133,7 +136,7 @@ export function calculatePrice(productKey: string, billingCycle: string): number
 
 export function getMonthlyEquivalent(productKey: string, billingCycle: string): number {
   const total = getProductPrice(productKey, billingCycle);
-  const cycle = WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles];
+  const cycle = BILLING_CONFIG.billingCycles[billingCycle as keyof typeof BILLING_CONFIG.billingCycles];
   if (!cycle) return total;
   return Math.round(total / cycle.months);
 }
@@ -144,7 +147,7 @@ export function formatPrice(amount: number): string {
 
 export function formatBillingCyclePrice(productKey: string, billingCycle: string): string {
   const total = getProductPrice(productKey, billingCycle);
-  const cycle = WHMCS_CONFIG.billingCycles[billingCycle as keyof typeof WHMCS_CONFIG.billingCycles];
+  const cycle = BILLING_CONFIG.billingCycles[billingCycle as keyof typeof BILLING_CONFIG.billingCycles];
   if (!cycle) return formatPrice(total);
   
   const perMonth = Math.round(total / cycle.months);

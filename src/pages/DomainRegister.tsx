@@ -107,7 +107,7 @@ export default function DomainRegister() {
     country: "US",
   });
 
-  // Fetch TLD pricing from WHMCS
+  // Fetch TLD pricing from billing system
   useEffect(() => {
     const fetchPricing = async () => {
       setIsLoadingPrice(true);
@@ -118,7 +118,7 @@ export default function DomainRegister() {
         // Parse pricing for each TLD
         Object.entries(pricing).forEach(([tldKey, prices]) => {
           if (prices && typeof prices === 'object') {
-            // WHMCS returns register prices as either a string or an object with year keys
+            // Billing system returns register prices as either a string or an object with year keys
             const registerPrice = prices.register;
             if (typeof registerPrice === 'string') {
               priceMap[tldKey.toLowerCase()] = parseFloat(registerPrice);

@@ -12,47 +12,60 @@ export interface TldPrice {
 // Popular TLDs to highlight
 const POPULAR_TLDS = ["com", "net", "io", "co", "dev", "org"];
 
+// Auto-refresh interval (5 minutes)
+const REFRESH_INTERVAL = 5 * 60 * 1000;
+
 export function useTldPricing() {
   const [pricing, setPricing] = useState<TldPrice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  const fetchPricing = async () => {
+    try {
+      const data = await domainsApi.getPricing();
+      
+      // Transform pricing response to our format
+      const tldList: TldPrice[] = Object.entries(data).map(([tld, prices]) => ({
+        tld: `.${tld}`,
+        register: extractPrice(prices?.register),
+        transfer: extractPrice(prices?.transfer),
+        renew: extractPrice(prices?.renew),
+        popular: POPULAR_TLDS.includes(tld.toLowerCase()),
+      }));
+
+      // Sort: popular first, then alphabetically
+      tldList.sort((a, b) => {
+        if (a.popular && !b.popular) return -1;
+        if (!a.popular && b.popular) return 1;
+        return a.tld.localeCompare(b.tld);
+      });
+
+      setPricing(tldList);
+      setLastUpdated(new Date());
+      setError(null);
+    } catch (err) {
+      console.error("Failed to fetch TLD pricing:", err);
+      setError("Failed to load pricing");
+      // Fallback to common pricing
+      if (pricing.length === 0) {
+        setPricing(getFallbackPricing());
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function fetchPricing() {
-      try {
-        const data = await domainsApi.getPricing();
-        
-        // Transform WHMCS pricing response to our format
-        const tldList: TldPrice[] = Object.entries(data).map(([tld, prices]) => ({
-          tld: `.${tld}`,
-          register: extractPrice(prices?.register),
-          transfer: extractPrice(prices?.transfer),
-          renew: extractPrice(prices?.renew),
-          popular: POPULAR_TLDS.includes(tld.toLowerCase()),
-        }));
-
-        // Sort: popular first, then alphabetically
-        tldList.sort((a, b) => {
-          if (a.popular && !b.popular) return -1;
-          if (!a.popular && b.popular) return 1;
-          return a.tld.localeCompare(b.tld);
-        });
-
-        setPricing(tldList);
-      } catch (err) {
-        console.error("Failed to fetch TLD pricing:", err);
-        setError("Failed to load pricing");
-        // Fallback to common pricing
-        setPricing(getFallbackPricing());
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
     fetchPricing();
+
+    // Auto-refresh pricing every 5 minutes
+    const intervalId = setInterval(fetchPricing, REFRESH_INTERVAL);
+
+    return () => clearInterval(intervalId);
   }, []);
 
-  return { pricing, isLoading, error };
+  return { pricing, isLoading, error, lastUpdated, refetch: fetchPricing };
 }
 
 // Extract price from WHMCS pricing object (handles different year keys)
